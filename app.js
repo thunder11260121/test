@@ -1,0 +1,1 @@
+async function update(){document.getElementById('wbgtValue').textContent='WBGT表示（簡易版）';}document.getElementById('refresh').addEventListener('click',update);update();
