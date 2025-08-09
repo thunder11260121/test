@@ -29,3 +29,4 @@ button.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
 .tabbar a{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:#475569;font-size:12px}
 .tabbar a.active{color:#0f172a;font-weight:700}
 @media(min-width:760px){.list{grid-template-columns:1fr 1fr}.spots{grid-template-columns:1fr 1fr}}
+.debug{position:fixed;left:8px;right:8px;bottom:70px;background:#111;color:#fff;padding:8px;border-radius:10px;opacity:.95;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;max-height:40vh;overflow:auto;z-index:9999}

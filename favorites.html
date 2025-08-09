@@ -11,5 +11,20 @@
   <a href="meals.html">たべる</a>
   <a href="favorites.html" class="active">お気に入り</a>
 </nav>
+
+<script>
+(function(){
+  function log(msg){
+    var el = document.querySelector('.debug');
+    if(!el){ el = document.createElement('pre'); el.className='debug'; document.body.appendChild(el); }
+    el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg;
+  }
+  window.addEventListener('error', function(e){ log('Error: ' + e.message + '\n' + (e.filename||'') + ':' + (e.lineno||'') ); });
+  window.addEventListener('unhandledrejection', function(e){ log('Promise rejection: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
+  log('Debug overlay enabled');
+})();
+</script>
+
 <script src="favorites.js"></script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw-v10.js");}</script>
 </body></html>
