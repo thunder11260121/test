@@ -5,7 +5,7 @@
 <body>
 <header class="top"><div class="title">スポット検索</div><button id="addToHome" class="primary">ホームに追加</button></header>
 <main>
-<section class="card"><div class="note">Googleマップはアプリ優先起動＋店名で検索。Appleマップは従来どおり。</div></section>
+<section class="card"><div class="note">Googleマップはアプリ優先で開くようにしました。未インストール時は自動でWebに切替。</div></section>
 <section class="card">
   <ul id="spots" class="spots"></ul>
 </section>
@@ -17,4 +17,5 @@
   <a href="favorites.html">お気に入り</a>
 </nav>
 <script src="spots.js"></script>
+<script src="gmaps_helper.js"></script>
 </body></html>
