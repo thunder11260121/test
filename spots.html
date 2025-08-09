@@ -10,7 +10,10 @@
 <body>
 <header class="top">
   <div class="title">スポット検索</div>
-  <button id="addToHome" class="primary">ホームに追加</button>
+  <div class="row">
+    <button id="addToHome" class="primary">ホームに追加</button>
+    <a href="meals.html" class="primary" style="text-decoration:none;display:inline-block">たべるを探す</a>
+  </div>
 </header>
 
 <main>
@@ -48,6 +51,7 @@
     <div class="row" style="margin-top:8px">
       <button id="searchSpots" class="primary">スポット検索</button>
       <button id="resetFilters">条件リセット</button>
+      <a href="meals.html" class="primary" style="text-decoration:none;display:inline-block">たべるを探す</a>
     </div>
   </section>
 
@@ -61,11 +65,11 @@
 <nav class="tabbar">
   <a href="index.html">天気</a>
   <a href="spots.html" class="active">スポット</a>
+  <a href="meals.html">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
 
 <script src="gmaps_helper.js"></script>
 <script src="spots.js"></script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v11.js");}</script>
 </body>
 </html>

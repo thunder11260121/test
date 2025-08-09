@@ -10,7 +10,10 @@
 <body>
 <header class="top">
   <div class="title">天気・WBGT</div>
-  <button id="addToHome" class="primary">ホームに追加</button>
+  <div class="row">
+    <button id="addToHome" class="primary">ホームに追加</button>
+    <a href="meals.html" class="primary" style="text-decoration:none;display:inline-block">たべるを探す</a>
+  </div>
 </header>
 
 <main>
@@ -25,25 +28,29 @@
         <option value="omiya">さいたま市大宮区</option>
         <option value="fukushima">福島市</option>
       </select>
-      <button id="refresh">更新</button>
+      <button id="refresh" class="primary">更新</button>
     </div>
   </section>
 
   <section class="card">
     <div class="row" style="justify-content:space-between;align-items:flex-end;">
       <div>
-        <div class="label">WBGT 推定</div>
-        <div id="wbgtValue" class="value">--</div>
-        <div id="wbgtLevel" class="badge">--</div>
+        <div class="label" style="color:#64748b">WBGT 推定</div>
+        <div id="wbgtValue" class="value" style="font-size:48px;font-weight:800;letter-spacing:1px">--</div>
+        <div id="wbgtLevel" class="badge" style="font-size:14px">--</div>
       </div>
-      <div class="now">
-        <div>気温: <span id="temp">--</span>℃</div>
-        <div>湿度: <span id="rh">--</span>%</div>
-        <div>体感(Heat Index): <span id="heatIndex">--</span>℃</div>
-        <small class="note">※WBGTは気温・湿度からの簡易推定。健康判断は公式情報に従ってください。</small>
+      <div class="now" style="text-align:right">
+        <div style="font-size:16px">気温: <span id="temp" style="font-weight:700">--</span>℃</div>
+        <div style="font-size:16px">湿度: <span id="rh" style="font-weight:700">--</span>%</div>
+        <div class="note" style="margin-top:6px">体感(Heat Index): <span id="heatIndex" style="font-weight:700">--</span>℃</div>
+        <small class="note">※WBGTは気温・湿度からの簡易推定。最終判断は公式情報に従ってください。</small>
       </div>
     </div>
-    <div id="advice" class="advice"></div>
+    <div id="advice" class="advice" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <a href="spots.html" class="primary" style="text-decoration:none;display:inline-block">今行ける場所を探す</a>
+      <a href="meals.html" class="primary" style="text-decoration:none;display:inline-block">たべるを探す</a>
+    </div>
   </section>
 
   <section class="card">
@@ -57,10 +64,10 @@
 <nav class="tabbar">
   <a href="index.html" class="active">天気</a>
   <a href="spots.html">スポット</a>
+  <a href="meals.html">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
 
 <script src="weather.js"></script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v11.js");}</script>
 </body>
 </html>
