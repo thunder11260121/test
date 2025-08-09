@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <title>おでかけ天気ナビ｜スポット</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20250809">
+<script src="utils.js?v=20250809"></script>
 </head>
 <body>
 <header class="top">
@@ -66,8 +67,8 @@
   <a href="favorites.html">お気に入り</a>
 </nav>
 
-<script src="gmaps_helper.js?v=hotfix"></script>
-<script src="spots.js?v=hotfix"></script>
+<script src="gmaps_helper.js?v=20250809?v=hotfix"></script>
+<script src="spots.js?v=20250809?v=hotfix"></script>
 <script>
   // 最終保険: JSが読み込めても自動検索されなかった場合に呼ぶ
   window.addEventListener('load', function(){
@@ -76,6 +77,6 @@
     if (typeof window.runSpots === 'function') { try{ window.runSpots(); }catch(e){} }
   });
 </script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v12.js");}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v12.js?v=20250809");}</script>
 </body>
 </html>
