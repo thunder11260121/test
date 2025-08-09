@@ -1,6 +1,5 @@
 
 (function(){
-  // Presets (same as before)
   const presets = {
     esaka:{name:"大阪・江坂",lat:34.7565,lon:135.4968},
     kyoto:{name:"京都市",lat:35.0380,lon:135.7740},
@@ -8,9 +7,7 @@
     omiya:{name:"さいたま市大宮区",lat:35.9060,lon:139.6240},
     fukushima:{name:"福島市",lat:37.7608,lon:140.4747}
   };
-
-  
-// ---- Overpass fetch with mirrors / timeout / retries ----
+  // ---- Overpass fetch with mirrors / timeout / retries ----
 async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
@@ -35,16 +32,12 @@ async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
         return await res.json();
       } catch(e) {
         lastErr = e;
-        // try next endpoint
       }
     }
-    // backoff before next retry round
     await new Promise(res => setTimeout(res, 800*(r+1)));
   }
   throw lastErr || new Error("Overpass fetch failed");
 }
-
-// ---- Small utils ----
 function rad(x){ return x*Math.PI/180; }
 const EARTH_R = 6371;
 function haversine(lat1,lon1,lat2,lon2){
@@ -55,7 +48,6 @@ function haversine(lat1,lon1,lat2,lon2){
 function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return 35; }
 
 
-  // ---- opening_hours (simple) ----
   function parseTimeHHMM(s){ const m=/^(\d{1,2}):(\d{2})$/.exec(s||""); if(!m)return null; const hh=+m[1],mm=+m[2]; if(hh>23||mm>59)return null; return {hh,mm}; }
   function timeToMin(t){ return t.hh*60+t.mm; }
   function parseOpeningHours(oh){
@@ -69,20 +61,17 @@ function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return
       if(!m) continue;
       const map={Su:0,Mo:1,Tu:2,We:3,Th:4,Fr:5,Sa:6};
       const segs=m[1].split(",");
-      const openT=parseTimeHHMM(m[2]), closeT=parseTimeHHMM(m[3]);
-      if(!openT||!closeT) continue;
+      const o=parseTimeHHMM(m[2]), c=parseTimeHHMM(m[3]); if(!o||!c) continue;
       const days=[];
       for(const seg of segs){
-        if(seg.includes("-")){
-          const [a,b]=seg.split("-"); const ai=map[a], bi=map[b];
-          if(ai<=bi){ for(let d=ai; d<=bi; d++) days.push(d); }
-          else { for(let d=ai; d<7; d++) days.push(d); for(let d=0; d<=bi; d++) days.push(d); }
-        }else{ const di=map[seg]; if(di!=null) days.push(di); }
+        if(seg.includes("-")){ const[a,b]=seg.split("-"); const ai=map[a],bi=map[b]; if(ai<=bi){ for(let d=ai; d<=bi; d++) days.push(d);} else {for(let d=ai; d<7; d++) days.push(d); for(let d=0; d<=bi; d++) days.push(d);} }
+        else { const di=map[seg]; if(di!=null) days.push(di); }
       }
-      rules.push({days, openMin:timeToMin(openT), closeMin:timeToMin(closeT)});
+      rules.push({days,openMin:timeToMin(o),closeMin:timeToMin(c)});
     }
     return rules.length?{type:"rules",rules}:{type:"unknown"};
   }
+  function fmt(m){ const hh=String(Math.floor(m/60)).padStart(2,"0"); const mm=String(m%60).padStart(2,"0"); return hh+":"+mm; }
   function isOpenNow(p){
     if(p.type==="always") return {open:true,label:"営業中",today:"24時間"};
     if(p.type!=="rules") return {open:null,label:"営業時間情報なし"};
@@ -92,24 +81,20 @@ function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return
     for(const r of todays){ if(min>=r.openMin && min<r.closeMin) return {open:true,label:"営業中",today:fmt(r.openMin)+"–"+fmt(r.closeMin)}; }
     return {open:false,label:"営業時間外"};
   }
-  function fmt(m){ const hh=String(Math.floor(m/60)).padStart(2,"0"); const mm=String(m%60).padStart(2,"0"); return hh+":"+mm; }
 
-  // ---- cuisine / flags ----
   function cuisineList(tags){ const c=(tags.cuisine||"").toLowerCase(); return c.split(";").map(s=>s.trim()).filter(Boolean); }
-  function typeFromTags(tags){ if(tags.shop==="bakery") return "bakery"; return tags.amenity || "place"; }
-  function odorScore(tags){ const t=typeFromTags(tags); if(t==="cafe"||t==="ice_cream"||t==="bakery") return -1; const c=cuisineList(tags); if(c.includes("yakiniku")||c.includes("bbq")) return 2; if(c.includes("yakitori")) return 1; return 0; }
-  function spicyScore(tags){ const c=cuisineList(tags); if(c.includes("indian")||c.includes("thai")||c.includes("sichuan")||c.includes("korean")) return 1; return 0; }
+  function typeFromTags(tags){ if(tags.shop==="bakery")return"bakery"; return tags.amenity||"place"; }
+  function odorScore(tags){ const t=typeFromTags(tags); if(t==="cafe"||t==="ice_cream"||t==="bakery")return -1; const c=cuisineList(tags); if(c.includes("yakiniku")||c.includes("bbq"))return 2; if(c.includes("yakitori")) return 1; return 0; }
+  function spicyScore(tags){ const c=cuisineList(tags); if(c.includes("indian")||c.includes("thai")||c.includes("sichuan")||c.includes("korean"))return 1; return 0; }
   function riskFlags(tags){
     const name=((tags.name||tags["name:ja"]||"")+"").toLowerCase();
     const c=cuisineList(tags);
-    return {
-      raw_fish: c.includes("sushi")||c.includes("sashimi")||name.includes("寿司")||name.includes("刺身"),
-      raw_egg: name.includes("生卵")||name.includes("すき焼き")||c.includes("sukiyaki"),
-      alcohol: c.includes("bar")||c.includes("pub")||c.includes("izakaya")||name.includes("居酒屋"),
-      soft_cheese: c.includes("cheese")||c.includes("pizza")||c.includes("italian"),
-      high_mercury: c.includes("tuna")||name.includes("マグロ"),
-      deli_meat: name.includes("生ハム")||name.includes("ローストビーフ")
-    };
+    return {raw_fish:c.includes("sushi")||c.includes("sashimi")||name.includes("寿司")||name.includes("刺身"),
+            raw_egg:name.includes("生卵")||name.includes("すき焼き")||c.includes("sukiyaki"),
+            alcohol:c.includes("bar")||c.includes("pub")||c.includes("izakaya")||name.includes("居酒屋"),
+            soft_cheese:c.includes("cheese")||c.includes("pizza")||c.includes("italian"),
+            high_mercury:c.includes("tuna")||name.includes("マグロ"),
+            deli_meat:name.includes("生ハム")||name.includes("ローストビーフ")};
   }
   function friendlyCuisine(tags){
     const t=typeFromTags(tags), c=cuisineList(tags);
@@ -133,14 +118,10 @@ function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return
     if(!tips.length) tips.push("比較的選びやすいお店");
     return tips.join("・");
   }
-  function appleMapsHref(name,lat,lon){
-    const q = encodeURIComponent(name||"目的地");
-    return "https://maps.apple.com/?ll="+lat+","+lon+"&q="+q;
-  }
+  function appleMapsHref(name,lat,lon){ const q=encodeURIComponent(name||"目的地"); return "https://maps.apple.com/?ll="+lat+","+lon+"&q="+q; }
 
-  // ---- Overpass query (restaurants + bakery) ----
   function buildQuery(lat,lon,radKm){
-    const r = Math.max(1, radKm)*1000;
+    const r=Math.max(1,radKm)*1000;
     return `[out:json][timeout:25];
 (
   node(around:${r},${lat},${lon})[amenity~"^(restaurant|cafe|fast_food|food_court|ice_cream)$"];
@@ -153,7 +134,6 @@ function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return
 out center 200;`;
   }
 
-  // ---- UI helpers ----
   function getSets(){
     const cats  = new Set([...document.querySelectorAll(".cat:checked")].map(x=>x.value));
     const prefs = new Set([...document.querySelectorAll(".pref:checked")].map(x=>x.value));
@@ -226,8 +206,12 @@ out center 200;`;
         <div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
       </div>
       <div class="actions vstack">
-        <button class="iconbtn gmaps" title="Googleマップで開く">G</button>
-        <a class="iconbtn amaps" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}"></a>
+        <button class="iconbtn gmaps" title="Googleマップで開く">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="#EA4335"></path><circle cx="12" cy="10" r="5" fill="#fff"></circle><text x="12" y="13" text-anchor="middle" font-size="8" font-family="Arial" fill="#1a73e8" font-weight="700">G</text></svg>
+        </button>
+        <a class="iconbtn amaps" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#e2e8f0" stroke="#cbd5e1"></rect><path d="M7 14l3-3 2 2 4-4" fill="none" stroke="#0ea5e9" stroke-width="2"></path><circle cx="16" cy="9" r="2" fill="#94a3b8"></circle></svg>
+        </a>
       </div>`;
       ul.appendChild(li);
     });

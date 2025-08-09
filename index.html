@@ -4,26 +4,13 @@
 <link rel="stylesheet" href="styles.css"></head>
 <body>
 <header class="top"><div class="title">天気・WBGT</div><button id="addToHome" class="primary">ホームに追加</button></header>
-<main><section class="card"><div class="note">診断ビルドです。まず <a href="unregister.html">unregister.html</a> を一度開いて旧キャッシュ/ServiceWorkerを解除してください。</div></section></main>
+<main><section class="card"><div class="note">Googleマップはアプリ優先で開くように修正。未インストール時は自動フォールバック。</div></section></main>
 <nav class="tabbar">
   <a href="index.html" class="active">天気</a>
   <a href="spots.html">スポット</a>
   <a href="meals.html">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
-
-<script>
-(function(){
-  function log(msg){
-    var el = document.querySelector('.debug');
-    if(!el){ el = document.createElement('pre'); el.className='debug'; document.body.appendChild(el); }
-    el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg;
-  }
-  window.addEventListener('error', function(e){ log('Error: ' + e.message + '\n' + (e.filename||'') + ':' + (e.lineno||'') ); });
-  window.addEventListener('unhandledrejection', function(e){ log('Promise rejection: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
-  log('Debug overlay enabled');
-})();
-</script>
-
-<script>document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw-v10.js");}</script>
+<script>document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw-v11.js");}</script>
+<script src="gmaps_helper.js"></script>
 </body></html>

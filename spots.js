@@ -1,9 +1,7 @@
 
 (function(){
   const presets={esaka:{name:"大阪・江坂",lat:34.7565,lon:135.4968},kyoto:{name:"京都市",lat:35.0380,lon:135.7740},kobe:{name:"神戸市",lat:34.6913,lon:135.1830},omiya:{name:"さいたま市大宮区",lat:35.9060,lon:139.6240},fukushima:{name:"福島市",lat:37.7608,lon:140.4747}};
-
-  
-// ---- Overpass fetch with mirrors / timeout / retries ----
+  // ---- Overpass fetch with mirrors / timeout / retries ----
 async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
@@ -28,16 +26,12 @@ async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
         return await res.json();
       } catch(e) {
         lastErr = e;
-        // try next endpoint
       }
     }
-    // backoff before next retry round
     await new Promise(res => setTimeout(res, 800*(r+1)));
   }
   throw lastErr || new Error("Overpass fetch failed");
 }
-
-// ---- Small utils ----
 function rad(x){ return x*Math.PI/180; }
 const EARTH_R = 6371;
 function haversine(lat1,lon1,lat2,lon2){
@@ -46,7 +40,6 @@ function haversine(lat1,lon1,lat2,lon2){
   return 2*EARTH_R*Math.atan2(Math.sqrt(A), Math.sqrt(1-A));
 }
 function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return 35; }
-
 
   const categories={
     indoor:['amenity=library','tourism=museum','amenity=planetarium','amenity=arts_centre','tourism=aquarium','shop=mall'],
@@ -125,8 +118,12 @@ out center 200;`;
       li.setAttribute('data-lat',s.lat); li.setAttribute('data-lon',s.lon); li.setAttribute('data-name',s.name);
       li.innerHTML = `<div><strong>${s.name}</strong><div class='meta'>${shortDesc(s)}</div></div>
         <div class='actions vstack'>
-          <button class='iconbtn gmaps' title='Googleマップで開く'>G</button>
-          <a class='iconbtn amaps' target='_blank' rel='noopener' title='Appleマップで開く' href='${appleMapsLink(s)}'></a>
+          <button class='iconbtn gmaps' title='Googleマップで開く'>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="#EA4335"></path><circle cx="12" cy="10" r="5" fill="#fff"></circle><text x="12" y="13" text-anchor="middle" font-size="8" font-family="Arial" fill="#1a73e8" font-weight="700">G</text></svg>
+          </button>
+          <a class='iconbtn amaps' target='_blank' rel='noopener' title='Appleマップで開く' href='${appleMapsLink(s)}'>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#e2e8f0" stroke="#cbd5e1"></rect><path d="M7 14l3-3 2 2 4-4" fill="none" stroke="#0ea5e9" stroke-width="2"></path><circle cx="16" cy="9" r="2" fill="#94a3b8"></circle></svg>
+          </a>
         </div>`;
       ul.appendChild(li);
     });

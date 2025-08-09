@@ -1,4 +1,3 @@
-
 // Google Maps app deeplink helper + fallback (safe)
 (function(){
   function openGoogleMapsApp(name, lat, lon){
@@ -9,9 +8,9 @@
       var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
         var t = Date.now();
-        location.href = appUrl; // try app
+        location.href = appUrl;
         setTimeout(function(){
-          if (Date.now() - t < 1500) location.href = webUrl; // fallback
+          if (Date.now() - t < 1500) location.href = webUrl;
         }, 800);
       } else {
         window.open(webUrl, "_blank", "noopener");
@@ -19,7 +18,6 @@
     }catch(e){ console.error(e); }
   }
   window.openGoogleMapsApp = openGoogleMapsApp;
-  // Click delegation: look for .iconbtn.gmaps
   document.addEventListener("click", function(e){
     var btn = e.target.closest(".iconbtn.gmaps, .gmaps");
     if(!btn) return;
