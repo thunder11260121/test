@@ -1,19 +1,65 @@
 <!doctype html>
-<html lang="ja"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><title>おでかけ天気ナビ｜天気</title>
-<link rel="stylesheet" href="styles.css"></head>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<title>おでかけ天気ナビ｜天気</title>
+<link rel="stylesheet" href="styles.css">
+</head>
 <body>
-<header class="bar"><div class="nav"><a href="index.html" class="active">天気・WBGT</a><a href="spots.html">スポット検索</a></div><button id="addToHome" class="primary">ホームに追加</button></header>
+<header class="top">
+  <div class="title">天気・WBGT</div>
+  <button id="addToHome" class="primary">ホームに追加</button>
+</header>
+
 <main>
-<section class="card selector"><div class="row">
-<label for="region">地域：</label>
-<select id="region"><option value="current">現在地（GPS）</option><option value="esaka">大阪・江坂</option><option value="kyoto">京都市</option><option value="kobe">神戸市</option><option value="omiya">さいたま市大宮区</option><option value="fukushima">福島市</option></select>
-<button id="refresh">更新</button></div></section>
-<section class="card"><div class="status"><div><div class="label">WBGT 推定</div><div id="wbgtValue" class="value">--</div><div id="wbgtLevel" class="badge">--</div></div>
-<div class="now"><div>気温: <span id="temp">--</span>℃</div><div>湿度: <span id="rh">--</span>%</div><div>体感(Heat Index): <span id="heatIndex">--</span>℃</div>
-<small class="note">※WBGTは気温・湿度からの簡易推定。健康判断は公式情報に従ってください。</small></div></div>
-<div id="advice" class="advice"></div></section>
-<section class="card"><h2>⛅ 天気（次12時間）</h2><ul id="hourly" class="hourly"></ul><h2>🗓 週間（5日）</h2><ul id="daily" class="daily"></ul></section>
-</main><footer><small>© 2025 おでかけ天気ナビ</small></footer>
-<script src="weather.js"></script></body></html>
+  <section class="card controls">
+    <div class="row">
+      <label for="region">地域：</label>
+      <select id="region">
+        <option value="current">現在地（GPS）</option>
+        <option value="esaka">大阪・江坂</option>
+        <option value="kyoto">京都市</option>
+        <option value="kobe">神戸市</option>
+        <option value="omiya">さいたま市大宮区</option>
+        <option value="fukushima">福島市</option>
+      </select>
+      <button id="refresh">更新</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:flex-end;">
+      <div>
+        <div class="label">WBGT 推定</div>
+        <div id="wbgtValue" class="value">--</div>
+        <div id="wbgtLevel" class="badge">--</div>
+      </div>
+      <div class="now">
+        <div>気温: <span id="temp">--</span>℃</div>
+        <div>湿度: <span id="rh">--</span>%</div>
+        <div>体感(Heat Index): <span id="heatIndex">--</span>℃</div>
+        <small class="note">※WBGTは気温・湿度からの簡易推定。健康判断は公式情報に従ってください。</small>
+      </div>
+    </div>
+    <div id="advice" class="advice"></div>
+  </section>
+
+  <section class="card">
+    <h3>⛅ 次の12時間</h3>
+    <ul id="hourly" class="hourly"></ul>
+    <h3>🗓 5日間</h3>
+    <ul id="daily" class="daily"></ul>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <a href="index.html" class="active">天気</a>
+  <a href="spots.html">スポット</a>
+  <a href="favorites.html">お気に入り</a>
+</nav>
+
+<script src="weather.js"></script>
+</body>
+</html>

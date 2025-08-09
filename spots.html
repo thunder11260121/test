@@ -1,25 +1,69 @@
 <!doctype html>
-<html lang="ja"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><title>おでかけ天気ナビ｜スポット</title>
-<link rel="stylesheet" href="styles.css"></head>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<title>おでかけ天気ナビ｜スポット</title>
+<link rel="stylesheet" href="styles.css">
+</head>
 <body>
-<header class="bar"><div class="nav"><a href="index.html">天気・WBGT</a><a href="spots.html" class="active">スポット検索</a></div><button id="addToHome" class="primary">ホームに追加</button></header>
+<header class="top">
+  <div class="title">スポット検索</div>
+  <button id="addToHome" class="primary">ホームに追加</button>
+</header>
+
 <main>
-<section class="card selector">
-<div class="row"><label for="region">地域：</label>
-<select id="region"><option value="current">現在地（GPS）</option><option value="esaka">大阪・江坂</option><option value="kyoto">京都市</option><option value="kobe">神戸市</option><option value="omiya">さいたま市大宮区</option><option value="fukushima">福島市</option></select></div>
-<div class="row"><label>車で</label><input type="number" id="driveMin" min="5" max="90" step="5" value="20"> 分以内
-<select id="speedProfile"><option value="slow">ゆっくり(25km/h)</option><option value="normal" selected>普通(35km/h)</option><option value="fast">速め(50km/h)</option></select>
-<button id="searchSpots" class="primary">スポット検索</button></div>
-<div class="row wrap"><span class="hint">カテゴリ優先度（1が最優先）</span>
-<div class="prio"><label>屋内: <input type="number" id="prio-indoor" min="1" max="5" value="1"></label>
-<label>木陰: <input type="number" id="prio-shade" min="1" max="5" value="2"></label>
-<label>水辺: <input type="number" id="prio-water" min="1" max="5" value="3"></label>
-<label>ベンチ: <input type="number" id="prio-seating" min="1" max="5" value="2"></label>
-<label>匂い少: <input type="number" id="prio-lowodor" min="1" max="5" value="1"></label></div></div>
-</section>
-<section class="card"><h2>おすすめスポット（上位10件）</h2><ul id="spots" class="spots"></ul>
-<small class="note">※Overpass APIから自動取得。各カードの「Googleマップ」か「Appleマップ」で開けます。</small></section>
-</main><footer><small>© 2025 おでかけ天気ナビ</small></footer>
-<script src="spots.js"></script></body></html>
+  <section class="card controls">
+    <div class="row">
+      <label for="region">地域：</label>
+      <select id="region">
+        <option value="current">現在地（GPS）</option>
+        <option value="esaka">大阪・江坂</option>
+        <option value="kyoto">京都市</option>
+        <option value="kobe">神戸市</option>
+        <option value="omiya">さいたま市大宮区</option>
+        <option value="fukushima">福島市</option>
+      </select>
+    </div>
+    <details class="filter">
+      <summary>条件を開く（車で◯◯分・カテゴリ優先度）</summary>
+      <div class="row" style="margin-top:8px">
+        <label>車で</label>
+        <input type="number" id="driveMin" min="5" max="90" step="5" value="20"> 分以内
+        <select id="speedProfile">
+          <option value="slow">ゆっくり(25km/h)</option>
+          <option value="normal" selected>普通(35km/h)</option>
+          <option value="fast">速め(50km/h)</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>屋内: <input type="number" id="prio-indoor" min="1" max="5" value="1"></label>
+        <label>木陰: <input type="number" id="prio-shade" min="1" max="5" value="2"></label>
+        <label>水辺: <input type="number" id="prio-water" min="1" max="5" value="3"></label>
+        <label>ベンチ: <input type="number" id="prio-seating" min="1" max="5" value="2"></label>
+        <label>匂い少: <input type="number" id="prio-lowodor" min="1" max="5" value="1"></label>
+      </div>
+    </details>
+    <div class="row" style="margin-top:8px">
+      <button id="searchSpots" class="primary">スポット検索</button>
+      <button id="resetFilters">条件リセット</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>おすすめスポット（上位10件）</h3>
+    <ul id="spots" class="spots"></ul>
+    <small class="note">※Overpass APIから自動取得。カードのボタンでマップやお気に入り登録ができます。</small>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <a href="index.html">天気</a>
+  <a href="spots.html" class="active">スポット</a>
+  <a href="favorites.html">お気に入り</a>
+</nav>
+
+<script src="spots.js"></script>
+</body>
+</html>
