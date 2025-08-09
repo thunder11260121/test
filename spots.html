@@ -10,9 +10,7 @@
 <body>
 <header class="top">
   <div class="title">スポット検索</div>
-  <div class="row">
-    <button id="addToHome" class="primary">ホームに追加</button>
-  </div>
+  <div class="row"><button id="addToHome" class="primary">ホームに追加</button></div>
 </header>
 
 <main>
@@ -68,8 +66,16 @@
   <a href="favorites.html">お気に入り</a>
 </nav>
 
-<script src="gmaps_helper.js"></script>
-<script src="spots.js"></script>
+<script src="gmaps_helper.js?v=hotfix"></script>
+<script src="spots.js?v=hotfix"></script>
+<script>
+  // 最終保険: JSが読み込めても自動検索されなかった場合に呼ぶ
+  window.addEventListener('load', function(){
+    const ul=document.getElementById('spots');
+    if(ul && !ul.children.length){ ul.innerHTML = "<li class='spot'>検索中…</li>"; }
+    if (typeof window.runSpots === 'function') { try{ window.runSpots(); }catch(e){} }
+  });
+</script>
 <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v12.js");}</script>
 </body>
 </html>
