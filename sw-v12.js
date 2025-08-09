@@ -1,12 +1,21 @@
 const CACHE='wbgt-cache-v12';
-const ASSETS=['./','index.html','spots.html','meals.html','favorites.html','styles.css','meals.js','spots.js','gmaps_helper.js','manifest.webmanifest','icon-192.png','icon-512.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
-self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
-self.addEventListener('fetch',e=>{
-  const url=new URL(e.request.url);
+const ASSETS=['./','index.html','spots.html','meals.html','favorites.html','styles.css','meals.js','spots.js','utils.js','gmaps_helper.js','manifest.webmanifest','icon-192.png','icon-512.png'];
+self.addEventListener('install',evt=>{
+  self.skipWaiting();
+  evt.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
+});
+self.addEventListener('activate',evt=>{
+  evt.waitUntil((async()=>{
+    const keys=await caches.keys();
+    await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));
+    await self.clients.claim();
+  })());
+});
+self.addEventListener('fetch',evt=>{
+  const url=new URL(evt.request.url);
   if(url.origin===location.origin){
-    e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+    evt.respondWith(caches.match(evt.request).then(r=>r||fetch(evt.request)));
   }else{
-    e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+    evt.respondWith(fetch(evt.request).catch(()=>caches.match(evt.request)));
   }
 });
