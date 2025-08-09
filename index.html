@@ -2,16 +2,105 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.webmanifest">
-  <title>おでかけ天気ナビ</title>
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>妊婦さんとおでかけ天気ナビ</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>妊婦さんとおでかけ天気ナビ</h1>
-  <div id="weather"></div>
-  <div id="wbgt"></div>
-  <div id="spots"></div>
+  <header class="bar">
+    <div>
+      <h1>妊婦さんとおでかけ天気ナビ</h1>
+      <p class="subtitle">WBGT・天気・スポット検索（Overpass対応）</p>
+    </div>
+    <button id="addToHome" class="ghost">ホームに追加</button>
+  </header>
+
+  <main>
+    <section class="card selector">
+      <div class="row">
+        <label for="region">地域：</label>
+        <select id="region">
+          <option value="current">現在地（GPS）</option>
+          <option value="esaka">大阪・江坂</option>
+          <option value="kyoto">京都市</option>
+          <option value="kobe">神戸市</option>
+          <option value="omiya">さいたま市大宮区</option>
+          <option value="fukushima">福島市</option>
+        </select>
+        <button id="refresh">更新</button>
+      </div>
+
+      <div class="row">
+        <label>車で</label>
+        <input type="number" id="driveMin" min="5" max="90" step="5" value="20"> 分以内
+        <select id="speedProfile">
+          <option value="slow">ゆっくり(25km/h)</option>
+          <option value="normal" selected>普通(35km/h)</option>
+          <option value="fast">速め(50km/h)</option>
+        </select>
+        <button id="searchSpots">スポット検索</button>
+      </div>
+
+      <div class="row wrap">
+        <span class="hint">カテゴリ優先度（1が最優先）</span>
+        <div class="prio">
+          <label>屋内: <input type="number" id="prio-indoor" min="1" max="5" value="1"></label>
+          <label>木陰: <input type="number" id="prio-shade" min="1" max="5" value="2"></label>
+          <label>水辺: <input type="number" id="prio-water" min="1" max="5" value="3"></label>
+          <label>ベンチ: <input type="number" id="prio-seating" min="1" max="5" value="2"></label>
+          <label>匂い少: <input type="number" id="prio-lowodor" min="1" max="5" value="1"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="status">
+        <div>
+          <div class="label">WBGT 推定</div>
+          <div id="wbgtValue" class="value">--</div>
+          <div id="wbgtLevel" class="badge">--</div>
+        </div>
+        <div class="now">
+          <div>気温: <span id="temp">--</span>℃</div>
+          <div>湿度: <span id="rh">--</span>%</div>
+          <div>体感(Heat Index): <span id="heatIndex">--</span>℃</div>
+          <small class="note">※WBGTは気温・湿度からの簡易推定。健康判断は公式情報に従ってください。</small>
+        </div>
+      </div>
+      <div id="advice" class="advice"></div>
+    </section>
+
+    <section class="card">
+      <h2>⛅ 天気（次12時間）</h2>
+      <ul id="hourly" class="hourly"></ul>
+      <h2>🗓 週間（5日）</h2>
+      <ul id="daily" class="daily"></ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>おすすめスポット（上位10件）</h2>
+        <div class="filters">
+          <label><input type="checkbox" id="filter-indoor" checked> 屋内</label>
+          <label><input type="checkbox" id="filter-shade" checked> 木陰</label>
+          <label><input type="checkbox" id="filter-water" checked> 水辺</label>
+          <label><input type="checkbox" id="filter-seating" checked> ベンチ多</label>
+          <label><input type="checkbox" id="filter-lowodor" checked> 匂い少</label>
+        </div>
+      </div>
+      <ul id="spots" class="spots"></ul>
+      <small class="note">※Overpass APIから自動取得。速度プロファイルで半径換算（後で等時間到達圏APIにも対応可）。</small>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 おでかけ天気ナビ｜Safariの共有 → 「ホーム画面に追加」でアプリ化できます。</small>
+  </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
