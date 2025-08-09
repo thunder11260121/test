@@ -3,9 +3,7 @@
 <link rel="manifest" href="manifest.webmanifest"><title>たべる（妊娠配慮）</title>
 <link rel="stylesheet" href="styles.css"></head>
 <body>
-<header class="top"><div class="title">たべる（妊娠配慮）</div>
-<button id="addToHome" class="primary">ホームに追加</button></header>
-
+<header class="top"><div class="title">たべる（妊娠配慮）</div><button id="addToHome" class="primary">ホームに追加</button></header>
 <main>
 <section class="card">
   <div class="row">
@@ -19,18 +17,12 @@
       <option value="fukushima">福島市</option>
     </select>
     <label>車で</label><input type="number" id="driveMin" min="5" max="60" step="5" value="15"> 分以内
-    <select id="speedProfile">
-      <option value="slow">ゆっくり(25km/h)</option>
-      <option value="normal" selected>普通(35km/h)</option>
-      <option value="fast">速め(50km/h)</option>
-    </select>
+    <select id="speedProfile"><option value="slow">ゆっくり(25km/h)</option><option value="normal" selected>普通(35km/h)</option><option value="fast">速め(50km/h)</option></select>
     <button id="search" class="primary">検索</button>
   </div>
 </section>
-
 <section class="card">
-  <details>
-    <summary>カテゴリと妊娠配慮フィルター</summary>
+  <details><summary>カテゴリと妊娠配慮フィルター</summary>
     <div class="row" style="margin-top:8px">
       <label><input type="checkbox" class="cat" value="japanese" checked> 和食</label>
       <label><input type="checkbox" class="cat" value="noodles" checked> 麺類（うどん/そば/ラーメン）</label>
@@ -56,19 +48,16 @@
   </details>
   <div class="note" style="margin-top:8px">※ 一般的な目安での絞り込みです。最終判断は医療者の指示に従ってください。</div>
 </section>
-
 <section class="card">
   <h3>候補（上位10件）</h3>
   <ul id="list" class="list"></ul>
 </section>
 </main>
-
 <nav class="tabbar">
   <a href="index.html">天気</a>
   <a href="spots.html">スポット</a>
   <a href="meals.html" class="active">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
-
 <script src="meals.js"></script>
 </body></html>

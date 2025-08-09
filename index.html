@@ -4,15 +4,12 @@
 <link rel="stylesheet" href="styles.css"></head>
 <body>
 <header class="top"><div class="title">天気・WBGT</div><button id="addToHome" class="primary">ホームに追加</button></header>
-<main><section class="card"><div class="note">このデモでは天気は省略。既存のindex.html/weather.jsと差し替え可能です。</div></section></main>
+<main><section class="card"><div class="note">（天気画面は既存版をそのまま使ってください。ここでは食事ページの追加のみ）</div></section></main>
 <nav class="tabbar">
   <a href="index.html" class="active">天気</a>
   <a href="spots.html">スポット</a>
   <a href="meals.html">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
-<script>
-document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));
-if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js");}
-</script>
+<script>document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js");}</script>
 </body></html>

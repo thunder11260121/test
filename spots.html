@@ -4,15 +4,17 @@
 <link rel="stylesheet" href="styles.css"></head>
 <body>
 <header class="top"><div class="title">スポット検索</div><button id="addToHome" class="primary">ホームに追加</button></header>
-<main><section class="card"><div class="note">既存のspots版と共存可。このパッケージは「たべる」ページの追加が主目的です。</div></section></main>
+<main>
+<section class="card"><div class="note">説明文の可読性を改善し、マップボタンを小型化しました。</div></section>
+<section class="card"><ul id="spots" class="spots">
+<li class="spot"><div><strong>サンプルスポット</strong><div class="meta">説明文は最大60文字幅・1.6行間で読みやすくなります。</div></div><div class="actions"><a class="btn" href="#">Googleマップ</a><a class="btn" href="#">Appleマップ</a></div></li>
+</ul></section>
+</main>
 <nav class="tabbar">
   <a href="index.html">天気</a>
   <a href="spots.html" class="active">スポット</a>
   <a href="meals.html">たべる</a>
   <a href="favorites.html">お気に入り</a>
 </nav>
-<script>
-document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));
-if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js");}
-</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js");}</script>
 </body></html>
