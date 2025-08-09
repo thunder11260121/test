@@ -1,4 +1,4 @@
-const CACHE='wbgt-tabs-v8';
+const CACHE='wbgt-tabs-v9';
 const ASSETS=['./','index.html','spots.html','meals.html','favorites.html','styles.css','spots.js','meals.js','favorites.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
