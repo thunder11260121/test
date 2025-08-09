@@ -1,52 +1,33 @@
-
+// meals.js — integrated loading indicator + disable button
 (function(){
-  const presets = {
-    esaka:{name:"大阪・江坂",lat:34.7565,lon:135.4968},
-    kyoto:{name:"京都市",lat:35.0380,lon:135.7740},
-    kobe:{name:"神戸市",lat:34.6913,lon:135.1830},
-    omiya:{name:"さいたま市大宮区",lat:35.9060,lon:139.6240},
-    fukushima:{name:"福島市",lat:37.7608,lon:140.4747}
-  };
-  // ---- Overpass fetch with mirrors / timeout / retries ----
-async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
-  const ENDPOINTS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://z.overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter"
-  ];
-  let lastErr;
-  for (let r = 0; r <= retries; r++) {
-    for (const url of ENDPOINTS) {
-      try {
-        const ctl = new AbortController();
-        const timer = setTimeout(()=>ctl.abort(), timeoutMs);
-        const res = await fetch(url, {
-          method: "POST",
-          body: query,
-          headers: {"Content-Type":"text/plain"},
-          signal: ctl.signal,
-          cache: "no-store"
-        });
-        clearTimeout(timer);
-        if(!res.ok) throw new Error(`HTTP ${res.status} at ${url}`);
-        return await res.json();
-      } catch(e) {
-        lastErr = e;
-      }
-    }
-    await new Promise(res => setTimeout(res, 800*(r+1)));
-  }
-  throw lastErr || new Error("Overpass fetch failed");
-}
-function rad(x){ return x*Math.PI/180; }
-const EARTH_R = 6371;
-function haversine(lat1,lon1,lat2,lon2){
-  const dLat = rad(lat2-lat1), dLon = rad(lon2-lon1);
-  const A = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
-  return 2*EARTH_R*Math.atan2(Math.sqrt(A), Math.sqrt(1-A));
-}
-function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return 35; }
+  // ---- shared helpers ----
+  function rad(x){ return x*Math.PI/180; }
+  const EARTH_R = 6371;
+  function haversine(lat1,lon1,lat2,lon2){ const dLat=rad(lat2-lat1), dLon=rad(lon2-lon1); const A=Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2; return 2*EARTH_R*Math.atan2(Math.sqrt(A), Math.sqrt(1-A)); }
+  function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return 35; }
 
+  async function fetchOverpassJSON(query, {timeoutMs=12000, retries=2} = {}){
+    const ENDPOINTS = [
+      "https://overpass-api.de/api/interpreter",
+      "https://z.overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter"
+    ];
+    let lastErr;
+    for (let r = 0; r <= retries; r++) {
+      for (const url of ENDPOINTS) {
+        try {
+          const ctl = new AbortController();
+          const timer = setTimeout(()=>ctl.abort(), timeoutMs);
+          const res = await fetch(url, { method: "POST", body: query, headers: {"Content-Type":"text/plain"}, signal: ctl.signal, cache:"no-store" });
+          clearTimeout(timer);
+          if(!res.ok) throw new Error(`HTTP ${res.status} at ${url}`);
+          return await res.json();
+        } catch(e) { lastErr = e; }
+      }
+      await new Promise(res => setTimeout(res, 800*(r+1)));
+    }
+    throw lastErr || new Error("Overpass fetch failed");
+  }
 
   function parseTimeHHMM(s){ const m=/^(\d{1,2}):(\d{2})$/.exec(s||""); if(!m)return null; const hh=+m[1],mm=+m[2]; if(hh>23||mm>59)return null; return {hh,mm}; }
   function timeToMin(t){ return t.hh*60+t.mm; }
@@ -160,9 +141,18 @@ out center 200;`;
       const nameLower=(s.name||"").toLowerCase();
       if(sets.exclude.some(w=>w && (nameLower.includes(w) || ((s.tags["name:ja"]||"")+"").includes(w)))) return null;
 
-      const cuisines=cuisineList(s.tags);
-      const t=typeFromTags(s.tags);
-      const flags=riskFlags(s.tags);
+      const cuisines=(s.tags.cuisine||"").toLowerCase().split(";").map(x=>x.trim()).filter(Boolean);
+      const t=(s.tags.shop==="bakery")?"bakery":(s.tags.amenity||"place");
+      const flags=(function(tags){
+        const nm=((tags.name||tags["name:ja"]||"")+"").toLowerCase();
+        const c=(tags.cuisine||"").toLowerCase().split(";");
+        return {raw_fish:c.includes("sushi")||c.includes("sashimi")||nm.includes("寿司")||nm.includes("刺身"),
+                raw_egg:nm.includes("生卵")||nm.includes("すき焼き")||c.includes("sukiyaki"),
+                alcohol:c.includes("bar")||c.includes("pub")||c.includes("izakaya")||nm.includes("居酒屋"),
+                soft_cheese:c.includes("cheese")||c.includes("pizza")||c.includes("italian"),
+                high_mercury:c.includes("tuna")||nm.includes("マグロ"),
+                deli_meat:nm.includes("生ハム")||nm.includes("ローストビーフ")};
+      })(s.tags);
 
       let catScore=0;
       if(sets.cats.has("japanese")&&(cuisines.includes("japanese")||cuisines.includes("teishoku"))) catScore-=2;
@@ -172,8 +162,8 @@ out center 200;`;
       if(sets.cats.has("family")&&(cuisines.includes("family"))) catScore-=2;
 
       let prefScore=0;
-      if(sets.prefs.has("low_odor"))  prefScore+=odorScore(s.tags);
-      if(sets.prefs.has("mild_spicy"))prefScore+=spicyScore(s.tags);
+      if(sets.prefs.has("low_odor"))  prefScore += (t==="cafe"||t==="ice_cream"||t==="bakery")? -1 : ((cuisines.includes("yakiniku")||cuisines.includes("bbq"))? 2 : (cuisines.includes("yakitori")?1:0));
+      if(sets.prefs.has("mild_spicy"))prefScore += ((cuisines.includes("indian")||cuisines.includes("thai")||cuisines.includes("sichuan")||cuisines.includes("korean"))?1:0);
 
       let riskScore=0; for(const k of sets.avoids){ if(flags[k]) riskScore+=4; }
 
@@ -181,11 +171,21 @@ out center 200;`;
       const distScore=distKm*0.4;
 
       const oh=s.tags.opening_hours||"";
-      const status=isOpenNow(parseOpeningHours(oh));
+      const status=(function(p){
+        if(!p||typeof p!=='string') return {open:null,label:"営業時間情報なし"};
+        const parsed=parseOpeningHours(p);
+        if(parsed.type==="always") return {open:true,label:"営業中",today:"24時間"};
+        if(parsed.type!=="rules") return {open:null,label:"営業時間情報なし"};
+        const now=new Date(), day=now.getDay(), min=now.getHours()*60+now.getMinutes();
+        const todays=parsed.rules.filter(r=>r.days.includes(day));
+        if(!todays.length) return {open:false,label:"本日休み"};
+        for(const r of todays){ if(min>=r.openMin && min<r.closeMin) return {open:true,label:"営業中",today:(String(r.openMin/60).padStart(2,'0')+':'+String(r.openMin%60).padStart(2,'0'))+'–'+(String(r.closeMin/60).padStart(2,'0')+':'+String(r.closeMin%60).padStart(2,'0'))}; }
+        return {open:false,label:"営業時間外"};
+      })(oh);
 
       const total=catScore+prefScore+riskScore+distScore+(status.open===true?-0.5:0);
       return {...s, distKm, total, flags, openStatus:status};
-    }).filter(Boolean).sort((a,b)=>a.total-b.total).slice(0,limit);
+    }).filter(Boolean).sort((a,b)=>a.total-b.total).slice(0,10);
 
     return results;
   }
@@ -206,12 +206,8 @@ out center 200;`;
         <div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
       </div>
       <div class="actions vstack">
-        <button class="iconbtn gmaps" title="Googleマップで開く">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="#EA4335"></path><circle cx="12" cy="10" r="5" fill="#fff"></circle><text x="12" y="13" text-anchor="middle" font-size="8" font-family="Arial" fill="#1a73e8" font-weight="700">G</text></svg>
-        </button>
-        <a class="iconbtn amaps" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#e2e8f0" stroke="#cbd5e1"></rect><path d="M7 14l3-3 2 2 4-4" fill="none" stroke="#0ea5e9" stroke-width="2"></path><circle cx="16" cy="9" r="2" fill="#94a3b8"></circle></svg>
-        </a>
+        <button class="iconbtn gmaps" title="Googleマップで開く">G</button>
+        <a class="iconbtn amaps" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}"></a>
       </div>`;
       ul.appendChild(li);
     });
@@ -226,20 +222,25 @@ out center 200;`;
       try{
         const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
         lat=pos.coords.latitude; lon=pos.coords.longitude;
-      }catch(_){ const p=presets.esaka; lat=p.lat; lon=p.lon; if(region) region.value="esaka"; }
-    }else{ const key=region?region.value:"esaka"; const p=presets[key]||presets.esaka; lat=p.lat; lon=p.lon; }
+      }catch(_){ const p={lat:34.7565,lon:135.4968}; lat=p.lat; lon=p.lon; if(region) region.value="esaka"; }
+    }else{ const m={esaka:{lat:34.7565,lon:135.4968},kyoto:{lat:35.0380,lon:135.7740},kobe:{lat:34.6913,lon:135.1830},omiya:{lat:35.9060,lon:139.6240},fukushima:{lat:37.7608,lon:140.4747}}; const p=m[region?region.value:"esaka"]||m.esaka; lat=p.lat; lon=p.lon; }
 
     const sets=getSets();
+    const ul=document.getElementById("list");
+    if(ul){ ul.innerHTML = "<li class='item'>検索中…</li>"; }
+    const btn=document.getElementById("search"); if(btn) btn.disabled = true;
+
     try{
       const items=await fetchMeals(lat,lon,minutes,profile,sets,10);
       renderList(items);
     }catch(e){
       console.error(e);
-      const ul=document.getElementById("list");
       const msg = /HTTP 429/.test(String(e)) ? "混雑のため取得制限中です。1–2分おいて再試行してください。" :
                   /AbortError/.test(String(e)) ? "タイムアウトしました。通信状況の良い場所でお試しください。" :
                   "取得に失敗しました。時間をおいて再試行してください。";
       if(ul) ul.innerHTML = `<li class="item">${msg}</li>`;
+    } finally {
+      if(btn) btn.disabled = false;
     }
   }
 
