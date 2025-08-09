@@ -13,7 +13,7 @@
       <a href="index.html">天気・WBGT</a>
       <a href="spots.html" class="active">スポット検索</a>
     </div>
-    <button id="addToHome">ホームに追加</button>
+    <button id="addToHome" class="primary">ホームに追加</button>
   </header>
 
   <main>
@@ -37,7 +37,7 @@
           <option value="normal" selected>普通(35km/h)</option>
           <option value="fast">速め(50km/h)</option>
         </select>
-        <button id="searchSpots">スポット検索</button>
+        <button id="searchSpots" class="primary">スポット検索</button>
       </div>
       <div class="row wrap">
         <span class="hint">カテゴリ優先度（1が最優先）</span>
@@ -54,7 +54,7 @@
     <section class="card">
       <h2>おすすめスポット（上位10件）</h2>
       <ul id="spots" class="spots"></ul>
-      <small class="note">※Overpass APIから自動取得。速度プロファイルで半径換算（等時間到達圏APIにも将来対応可）。</small>
+      <small class="note">※Overpass APIから自動取得。結果カードの「Googleマップ」で開けます。</small>
     </section>
   </main>
 

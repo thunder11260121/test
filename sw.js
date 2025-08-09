@@ -1,4 +1,4 @@
-const CACHE='wbgt-split-v1';
+const CACHE='wbgt-split-v2';
 const ASSETS=['./','index.html','spots.html','styles.css','weather.js','spots.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
