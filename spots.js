@@ -1,6 +1,5 @@
-// spots.js — parity with meals page (name fallback + description + badges)
+// spots.js — exclude unnamed benches + parity with meals
 (function(){
-  // --- helpers ---
   function rad(x){ return x*Math.PI/180; }
   const R = 6371;
   function haversine(a,b,c,d){ const dLat=rad(c-a), dLon=rad(d-b); const A=Math.sin(dLat/2)**2 + Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dLon/2)**2; return 2*R*Math.atan2(Math.sqrt(A),Math.sqrt(1-A)); }
@@ -128,20 +127,23 @@ out center 200;`;
         const latc=e.lat||(e.center&&e.center.lat);
         const lonc=e.lon||(e.center&&e.center.lon);
         const tags=e.tags||{};
-        // ★ nameの決め方（mealsと同様に日本語優先、なければ種類名）
-        const name=tags.name || tags['name:ja'] || tags['name:en'] || friendlyType(tags);
+        const hasName = !!(tags.name || tags['name:ja'] || tags['name:en']);
+        const name=hasName ? (tags.name || tags['name:ja'] || tags['name:en']) : friendlyType(tags);
         const props=mapProps(tags);
         const distKm=haversine(lat,lon,latc,lonc);
-        return {id:e.id,lat:latc,lon:lonc,tags,name,props,distKm};
-      }).filter(x=>x.lat&&x.lon);
+        const type=friendlyType(tags);
+        const isUnnamed = !hasName;
+        const shouldExclude = isUnnamed && (tags.amenity==='bench' || type==='ベンチ');
+        return shouldExclude ? null : {id:e.id,lat:latc,lon:lonc,tags,name,props,distKm,type,isUnnamed};
+      }).filter(Boolean);
 
       const scored=es.map(s=>{
         let score = s.distKm;
-        if(s.props.indoor) score -= (parseInt((document.getElementById('prio-indoor')||{}).value,10)||1)*0.1;
-        if(s.props.shade)  score -= (parseInt((document.getElementById('prio-shade')||{}).value,10)||2)*0.1;
-        if(s.props.water)  score -= (parseInt((document.getElementById('prio-water')||{}).value,10)||3)*0.1;
-        if(s.props.seating)score -= (parseInt((document.getElementById('prio-seating')||{}).value,10)||2)*0.05;
-        if(s.props.lowodor)score -= (parseInt((document.getElementById('prio-lowodor')||{}).value,10)||1)*0.05;
+        if(s.props.indoor) score -= prio.indoor*0.1;
+        if(s.props.shade)  score -= prio.shade*0.1;
+        if(s.props.water)  score -= prio.water*0.1;
+        if(s.props.seating)score -= prio.seating*0.05;
+        if(s.props.lowodor)score -= prio.lowodor*0.05;
         return {...s, score};
       }).sort((a,b)=>a.score-b.score).slice(0,10);
 
@@ -155,23 +157,21 @@ out center 200;`;
     }
   }
 
-  function appleMapsHref(name,lat,lon){ const q=encodeURIComponent(name||"目的地"); return "https://maps.apple.com/?ll="+lat+","+lon+"&q="+q; }
-
   function render(items){
     const ul=document.getElementById('spots'); ul.innerHTML='';
     if(!items.length){ const li=document.createElement('li'); li.className='spot'; li.textContent='見つかりませんでした。'; ul.appendChild(li); return; }
     items.forEach(s=>{
-      const feats = featureChips(s.props||{});
-      const badges = `<span class="badge">${friendlyType(s.tags)}</span>`;
+      const feats = (function(p){ const a=[]; if(p.indoor)a.push('屋内'); if(p.shade)a.push('木陰'); if(p.water)a.push('水辺'); if(p.seating)a.push('ベンチ'); if(p.lowodor)a.push('匂い少'); return a; })(s.props||{});
+      const badge = `<span class="badge">${s.type||''}</span>`;
       const li=document.createElement('li'); li.className='spot';
       li.setAttribute('data-lat',s.lat); li.setAttribute('data-lon',s.lon); li.setAttribute('data-name',s.name||'');
       li.innerHTML = `<div>
-        <strong>${s.name}</strong> ${badges}
+        <strong>${s.name}</strong> ${badge}
         <div class='meta'>約${s.distKm.toFixed(1)}km／${feats.length?feats.join('・'):'特徴情報なし'}</div>
       </div>
       <div class='actions vstack'>
         <button class='iconbtn gmaps' title='Googleマップで開く' data-lat='${s.lat}' data-lon='${s.lon}' data-name='${s.name}'>G</button>
-        <a class='iconbtn amaps' target='_blank' rel='noopener' title='Appleマップで開く' href='${appleMapsLink(s)}'></a>
+        <a class='iconbtn amaps' target='_blank' rel='noopener' title='Appleマップで開く' href='https://maps.apple.com/?ll=${s.lat},${s.lon}&q=${encodeURIComponent(s.name)}'></a>
       </div>`;
       ul.appendChild(li);
     });
