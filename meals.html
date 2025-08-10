@@ -10,24 +10,23 @@
 <body>
 <header class="top">
   <div class="title">たべる（妊娠配慮）</div>
-  <div class="row">
-    <button id="addToHome" class="primary">ホームに追加</button>
-  </div>
+  <button id="addToHome" class="primary"><span class="icon">+</span> ホームに追加</button>
 </header>
 
 <main>
   <section class="card">
     <div class="row">
-      <label for="region">地域：</label>
-      <select id="region">
-        <option value="current">現在地（GPS）</option>
-        <option value="esaka">大阪・江坂</option>
-        <option value="kyoto">京都市</option>
-        <option value="kobe">神戸市</option>
-        <option value="omiya">さいたま市大宮区</option>
-        <option value="fukushima">福島市</option>
-      </select>
-      <label>車で</label><input type="number" id="driveMin" min="5" max="60" step="5" value="15"> 分以内
+        <label for="region">地域：</label>
+        <input id="region" list="region-options" value="現在地（GPS）">
+        <datalist id="region-options">
+          <option value="現在地（GPS）" data-key="current"></option>
+          <option value="大阪・江坂" data-key="esaka"></option>
+          <option value="京都市" data-key="kyoto"></option>
+          <option value="神戸市" data-key="kobe"></option>
+          <option value="さいたま市大宮区" data-key="omiya"></option>
+          <option value="福島市" data-key="fukushima"></option>
+        </datalist>
+        <label>車で</label><input type="number" id="driveMin" min="5" max="60" step="5" value="15"> 分以内
       <select id="speedProfile"><option value="slow">ゆっくり(25km/h)</option><option value="normal" selected>普通(35km/h)</option><option value="fast">速め(50km/h)</option></select>
 
       <label for="sortBy">並び替え：</label>
