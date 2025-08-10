@@ -1,0 +1,23 @@
+
+/* weather-ui.css - Hourly strip & Daily rows */
+.hourly-strip{display:flex;gap:10px;overflow-x:auto;padding:6px 2px;scroll-snap-type:x mandatory}
+.hourly-card{flex:0 0 auto;min-width:84px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px;scroll-snap-align:start;box-shadow:0 4px 12px rgba(16,24,40,.06)}
+.hourly-card .t{font-weight:700}
+.hourly-card .p{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid var(--border);margin-left:6px}
+.pill.uv-low{background:#e0f2fe;border-color:#bae6fd}
+.pill.uv-mod{background:#fef9c3;border-color:#fde68a}
+.pill.uv-high{background:#fed7aa;border-color:#fdba74}
+.pill.uv-vhigh{background:#fecaca;border-color:#fca5a5}
+.spark{width:100%;height:22px;display:block;margin-top:6px}
+.daily-rows{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.daily-row{display:grid;grid-template-columns:1fr 3fr auto;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px}
+.range{position:relative;height:8px;border-radius:6px;background:#e2e8f0}
+.range .bar{position:absolute;height:100%;border-radius:6px;background:#c7d2fe}
+.rainbar{height:6px;border-radius:6px;background:#e2e8f0;margin-top:6px;position:relative}
+.rainbar .fill{position:absolute;height:100%;left:0;top:0;border-radius:6px;background:#bae6fd}
+@media(prefers-color-scheme:dark){
+ .range{background:#334155}.range .bar{background:#475569}
+ .rainbar{background:#334155}.rainbar .fill{background:#0ea5e9}
+ .hourly-card{box-shadow:0 8px 20px rgba(0,0,0,.35)}
+}
