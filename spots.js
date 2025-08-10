@@ -1,4 +1,4 @@
-// spots.js — filters summary + closed by default + persist UI + loading
+// spots.js — FULL FEATURE + region select tap hotfix
 (function(){
   const PRESETS={esaka:{lat:34.7565,lon:135.4968},kyoto:{lat:35.0380,lon:135.7740},kobe:{lat:34.6913,lon:135.1830},omiya:{lat:35.9060,lon:139.6240},fukushima:{lat:37.7608,lon:140.4747}};
   const EXCLUDE_UNNAMED_ATTRACTION=false;
@@ -101,18 +101,17 @@
     setLoading();
     const btn=document.getElementById('searchSpots'); if(btn) btn.disabled=true;
     try{
-        const region=document.getElementById('region');
-        const key=Utils.resolveRegionKey(region?region.value:'');
+      const region=document.getElementById('region');
       const minutes=parseInt((document.getElementById('driveMin')||{}).value,10)||20;
       const profile=(document.getElementById('speedProfile')||{}).value||'normal';
       saveUI(); updateSummary();
 
-        let lat,lon;
-        if(key==='current'){
-          try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
-               lat=pos.coords.latitude; lon=pos.coords.longitude;
-          }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value=document.querySelector('#region-options option[data-key="esaka"]').value; }
-        }else{ const p=PRESETS[key||'esaka']||PRESETS.esaka; lat=p.lat; lon=p.lon; }
+      let lat,lon;
+      if(region && region.value==='current'){
+        try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
+             lat=pos.coords.latitude; lon=pos.coords.longitude;
+        }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value='esaka'; }
+      }else{ const p=PRESETS[region?region.value:'esaka']||PRESETS.esaka; lat=p.lat; lon=p.lon; }
 
       const kmh=speedToKmh(profile);
       const radKm=Math.max(1,(kmh*(minutes/60))*0.6);
@@ -156,6 +155,7 @@
       setMessage(/HTTP 429/.test(String(e))?"混雑のため取得制限中です。1–2分おいて再試行してください。":/AbortError/.test(String(e))?"タイムアウトしました。通信状況の良い場所でお試しください。":"取得に失敗しました。時間をおいて再試行してください。");
     }finally{
       const btn=document.getElementById('searchSpots'); if(btn) btn.disabled=false;
+      const sel=document.getElementById('region'); if(sel){ sel.disabled=false; sel.style.pointerEvents='auto'; }
     }
   }
 
@@ -171,6 +171,7 @@
       });
       updateSummary();
     });
+    const sel=document.getElementById('region'); if(sel){ sel.addEventListener('change', run); sel.disabled=false; sel.style.pointerEvents='auto'; }
   }
 
   window.addEventListener('load', ()=>{

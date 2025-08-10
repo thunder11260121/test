@@ -1,4 +1,4 @@
-// meals.js — filters closed by default + summary text + open-only + sort + persist UI
+// meals.js — FULL FEATURE + region select tap hotfix
 (function(){
   function speedToKmh(p){ if(p==='slow')return 25; if(p==='fast')return 50; return 35; }
   function rad(x){ return x*Math.PI/180; }
@@ -23,7 +23,7 @@
     return rules.length?{type:"rules",rules}:{type:"unknown"};
   }
   function fmt(m){ const hh=String(Math.floor(m/60)).padStart(2,"0"); const mm=String(m%60).padStart(2,"0"); return hh+":"+mm; }
-  function computeOpenStatus(oh, now=new Date()){
+    function computeOpenStatus(oh, now=new Date()){
     const parsed=parseOpeningHours(oh||"");
     if(parsed.type==="always") return {open:true,label:"営業中",today:"24時間"};
     if(parsed.type!=="rules") return {open:null,label:"営業時間情報なし"};
@@ -158,20 +158,19 @@ out center 200;`;
     showLoading();
     const btn=document.getElementById("search"); if(btn) btn.disabled=true;
     try{
-        const region=document.getElementById("region");
-        const key=Utils.resolveRegionKey(region?region.value:'');
+      const region=document.getElementById("region");
       const minutes=parseInt((document.getElementById("driveMin")||{}).value,10)||15;
       const profile=(document.getElementById("speedProfile")||{}).value||"normal";
       const sortBy=(document.getElementById("sortBy")||{}).value||"score";
       const openOnly= !!(document.getElementById("openOnly")||{}).checked;
       saveUI();
 
-        let lat,lon;
-        if(key==="current"){
-          try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
-               lat=pos.coords.latitude; lon=pos.coords.longitude;
-          }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value=document.querySelector('#region-options option[data-key="esaka"]').value; }
-        }else{ const p=PRESETS[key||"esaka"]||PRESETS.esaka; lat=p.lat; lon=p.lon; }
+      let lat,lon;
+      if(region && region.value==="current"){
+        try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
+             lat=pos.coords.latitude; lon=pos.coords.longitude;
+        }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value="esaka"; }
+      }else{ const p=PRESETS[region?region.value:"esaka"]||PRESETS.esaka; lat=p.lat; lon=p.lon; }
 
       const kmh=speedToKmh(profile);
       const radKm=Math.max(1,(kmh*(minutes/60))*0.6);
@@ -194,17 +193,9 @@ out center 200;`;
 
         const cuisines=(s.tags.cuisine||"").toLowerCase().split(";").map(x=>x.trim()).filter(Boolean);
         const t=(s.tags.shop==="bakery")?"bakery":(s.tags.amenity||"place");
-        const flags=(function(tags){
-          const nm=((tags.name||tags["name:ja"]||"")+"").toLowerCase();
-          const c=(tags.cuisine||"").toLowerCase().split(";");
-          return {raw_fish:c.includes("sushi")||c.includes("sashimi")||nm.includes("寿司")||nm.includes("刺身"),
-                  raw_egg:nm.includes("生卵")||nm.includes("すき焼き")||c.includes("sukiyaki"),
-                  alcohol:c.includes("bar")||c.includes("pub")||c.includes("izakaya")||nm.includes("居酒屋"),
-                  soft_cheese:c.includes("cheese")||c.includes("pizza")||c.includes("italian"),
-                  high_mercury:c.includes("tuna")||nm.includes("マグロ"),
-                  deli_meat:nm.includes("生ハム")||nm.includes("ローストビーフ")};
-        })(s.tags);
+        const flags=riskFlags(s.tags);
 
+        // スコア計算
         let score=0;
         if(t==="cafe"||t==="ice_cream"||t==="bakery") score-=0.4;
         if(cuisines.includes("indian")||cuisines.includes("thai")||cuisines.includes("sichuan")||cuisines.includes("korean")) score+=0.4;
@@ -212,7 +203,16 @@ out center 200;`;
         const distKm=haversine(lat,lon,s.lat,s.lon);
         score += distKm*0.4;
 
-        const openStatus=computeOpenStatus(s.tags.opening_hours||"");
+        const openStatus=(function(oh){
+          const parsed=parseOpeningHours(oh||"");
+          if(parsed.type==="always") return {open:true,label:"営業中",today:"24時間"};
+          if(parsed.type!=="rules") return {open:null,label:"営業時間情報なし"};
+          const now=new Date(), d=now.getDay(), m=now.getHours()*60+now.getMinutes();
+          const todays=parsed.rules.filter(r=>r.days.includes(d));
+          if(!todays.length) return {open:false,label:"本日休み"};
+          for(const r of todays){ if(m>=r.openMin && m<r.closeMin) return {open:true,label:"営業中",today:fmt(r.openMin)+"–"+fmt(r.closeMin)}; }
+          return {open:false,label:"営業時間外"};
+        })(s.tags.opening_hours||"");
 
         return {...s, distKm, score, flags, openStatus, type:t};
       }).filter(Boolean);
@@ -231,33 +231,38 @@ out center 200;`;
       }
 
       results = results.slice(0,10);
-      const ul=document.getElementById("list"); ul.innerHTML="";
-      if(!results.length){ const li=document.createElement("li"); li.className="item"; li.textContent="条件に合うお店が見つかりませんでした。"; ul.appendChild(li); return; }
-      results.forEach(s=>{
-        const f=s.flags||{}; const tags=[];
-        if(f.raw_fish)tags.push("生魚注意"); if(f.raw_egg)tags.push("生卵注意"); if(f.alcohol)tags.push("アルコール中心"); if(f.soft_cheese)tags.push("チーズ注意"); if(f.high_mercury)tags.push("水銀多注意"); if(f.deli_meat)tags.push("デリミート注意");
-        const badge = s.openStatus.open===true?`<span class="badge-open on">${s.openStatus.label}</span>`:s.openStatus.open===false?`<span class="badge-open off">${s.openStatus.label}</span>`:`<span class="badge-open">${s.openStatus.label}</span>`;
-        const hours = s.openStatus.today?` <span class="meta">本日 ${s.openStatus.today}</span>`:"";
-        const li=document.createElement("li"); li.className="item";
-        li.setAttribute("data-lat",s.lat); li.setAttribute("data-lon",s.lon); li.setAttribute("data-name",s.name);
-        li.innerHTML=`<div>
-          <strong>${s.name}</strong> <span class="badge">${friendlyCuisine(s.tags)}</span> ${badge}${hours}
-          <div class="meta">約${s.distKm.toFixed(1)}km／${explainReason(s.tags,s.flags||{})}</div>
-          <div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
-        </div>
-        <div class="actions vstack">
-          <button class="iconbtn gmaps" aria-label="Googleマップで開く" title="Googleマップで開く">G</button>
-          <a class="iconbtn amaps" aria-label="Appleマップで開く" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}"></a>
-        </div>`;
-        ul.appendChild(li);
-      });
+      render(results);
     }catch(e){
       const ul=document.getElementById("list");
       const msg=/HTTP 429/.test(String(e))?"混雑のため取得制限中です。1–2分おいて再試行してください。":/AbortError/.test(String(e))?"タイムアウトしました。通信状況の良い場所でお試しください。":"取得に失敗しました。時間をおいて再試行してください。";
       if(ul) ul.innerHTML = `<li class="item">${msg}</li>`;
     }finally{
       const btn=document.getElementById("search"); if(btn) btn.disabled=false;
+      const sel=document.getElementById("region"); if(sel){ sel.disabled=false; sel.style.pointerEvents="auto"; }
     }
+  }
+
+  function render(items){
+    const ul=document.getElementById("list"); ul.innerHTML="";
+    if(!items.length){ const li=document.createElement("li"); li.className="item"; li.textContent="条件に合うお店が見つかりませんでした。"; ul.appendChild(li); return; }
+    items.forEach(s=>{
+      const f=s.flags||{}; const tags=[];
+      if(f.raw_fish)tags.push("生魚注意"); if(f.raw_egg)tags.push("生卵注意"); if(f.alcohol)tags.push("アルコール中心"); if(f.soft_cheese)tags.push("チーズ注意"); if(f.high_mercury)tags.push("水銀多注意"); if(f.deli_meat)tags.push("デリミート注意");
+      const badge = s.openStatus.open===true?`<span class="badge-open on">${s.openStatus.label}</span>`:s.openStatus.open===false?`<span class="badge-open off">${s.openStatus.label}</span>`:`<span class="badge-open">${s.openStatus.label}</span>`;
+      const hours = s.openStatus.today?` <span class="meta">本日 ${s.openStatus.today}</span>`:"";
+      const li=document.createElement("li"); li.className="item";
+      li.setAttribute("data-lat",s.lat); li.setAttribute("data-lon",s.lon); li.setAttribute("data-name",s.name);
+      li.innerHTML=`<div>
+        <strong>${s.name}</strong> <span class="badge">${friendlyCuisine(s.tags)}</span> ${badge}${hours}
+        <div class="meta">約${s.distKm.toFixed(1)}km／${explainReason(s.tags,s.flags||{})}</div>
+        <div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+      </div>
+      <div class="actions vstack">
+        <button class="iconbtn gmaps" aria-label="Googleマップで開く" title="Googleマップで開く">G</button>
+        <a class="iconbtn amaps" aria-label="Appleマップで開く" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsHref(s.name,s.lat,s.lon)}"></a>
+      </div>`;
+      ul.appendChild(li);
+    });
   }
 
   function bindUI(){
@@ -278,6 +283,7 @@ out center 200;`;
       const ex=document.getElementById("exclude"); if(ex) ex.value="";
       updateSummary();
     });}
+    const sel=document.getElementById("region"); if(sel){ sel.addEventListener("change", run); sel.disabled=false; sel.style.pointerEvents="auto"; }
   }
 
   window.addEventListener("load", ()=>{
