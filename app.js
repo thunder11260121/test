@@ -22,10 +22,10 @@ function heatIndexC(tempC, rh){
   return (HIblend - 32) * 5/9;
 }
 function wbgtLevel(wbgt){
-  if (wbgt < 25) return { label:"注意", class:"safe", advice:"水分をこまめに。短時間の屋外はOK。" };
-  if (wbgt < 28) return { label:"警戒", class:"caution", advice:"屋外は短時間に。日陰/屋内をメインに、塩分補給も。" };
-  if (wbgt < 31) return { label:"厳重警戒", class:"high", advice:"長時間屋外は避ける。午前のみ短時間、午後は屋内。" };
-  return { label:"危険", class:"danger", advice:"外出は最小限に。冷房の効いた室内で安静に。" };
+  if (wbgt < 25) return { label:"注意", class:"safe", icon:"🟢", advice:"水分をこまめに。短時間の屋外はOK。" };
+  if (wbgt < 28) return { label:"警戒", class:"caution", icon:"⚠️", advice:"屋外は短時間に。日陰/屋内をメインに、塩分補給も。" };
+  if (wbgt < 31) return { label:"厳重警戒", class:"high", icon:"🔥", advice:"長時間屋外は避ける。午前のみ短時間、午後は屋内。" };
+  return { label:"危険", class:"danger", icon:"☠️", advice:"外出は最小限に。冷房の効いた室内で安静に。" };
 }
 
 async function fetchWeatherAll(lat, lon){
@@ -198,7 +198,7 @@ async function updateWeatherAndWBGT(lat, lon){
   const lvl  = wbgtLevel(wbgt);
   document.getElementById("wbgtValue").textContent = wbgt.toFixed(1);
   const lbl = document.getElementById("wbgtLevel");
-  lbl.textContent = lvl.label; lbl.className = "badge " + lvl.class;
+  lbl.textContent = `${lvl.icon} ${lvl.label}`; lbl.className = "badge " + lvl.class;
   document.getElementById("temp").textContent = temp.toFixed(1);
   document.getElementById("rh").textContent = rh.toFixed(0);
   document.getElementById("heatIndex").textContent = hi.toFixed(1);
