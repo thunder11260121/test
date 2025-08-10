@@ -27,6 +27,8 @@
     if(!name){
       var strong = btn.closest("li, .spot, .item, .card"); if(strong){ var t = strong.querySelector("strong"); if(t) name = t.textContent.trim(); }
     }
-    if(lat && lon){ e.preventDefault(); openGoogleMapsApp(name||"", lat, lon); }
+    lat = parseFloat(lat); lon = parseFloat(lon);
+    if(!isFinite(lat) || !isFinite(lon)) return;
+    e.preventDefault(); openGoogleMapsApp(name||"", lat, lon);
   }, false);
 })();
