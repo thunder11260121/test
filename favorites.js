@@ -12,8 +12,10 @@
   function makeKey(entry){
     const id = entry.id || "";
     const name = entry.name || "";
-    const lat = entry.lat!=null ? Number(entry.lat).toFixed(5) : "";
-    const lon = entry.lon!=null ? Number(entry.lon).toFixed(5) : "";
+    const latNum = entry.lat != null ? Number(entry.lat) : NaN;
+    const lonNum = entry.lon != null ? Number(entry.lon) : NaN;
+    const lat = isFinite(latNum) ? latNum.toFixed(5) : "";
+    const lon = isFinite(lonNum) ? lonNum.toFixed(5) : "";
     const kind = entry.kind || "";
     return id ? `${kind}:${id}` : `${kind}:${name}|${lat},${lon}`;
   }

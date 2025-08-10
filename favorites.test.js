@@ -59,5 +59,19 @@ describe('Favorites manager', () => {
     Favorites.removeFavorite(item);
     expect(Favorites.isFavorite(item)).toBe(false);
   });
+
+  test('handles invalid coordinates without generating bad keys', () => {
+    const bad = { name: 'Mystery Spot', kind: 'spot', lat: 'oops', lon: Infinity };
+    expect(Favorites.isFavorite(bad)).toBe(false);
+    Favorites.addFavorite(bad);
+    const list = Favorites.getFavorites();
+    expect(list).toHaveLength(1);
+    expect(list[0].key).toBe('spot:Mystery Spot|,');
+    expect(list[0].key).not.toMatch(/NaN|Infinity/);
+    expect(Favorites.isFavorite(bad)).toBe(true);
+    Favorites.removeFavorite(bad);
+    expect(Favorites.isFavorite(bad)).toBe(false);
+    expect(Favorites.getFavorites()).toHaveLength(0);
+  });
 });
 
