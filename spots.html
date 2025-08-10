@@ -16,16 +16,17 @@
 <main>
   <section class="card controls">
     <div class="row">
-      <label for="region">地域：</label>
-      <select id="region">
-        <option value="current">現在地（GPS）</option>
-        <option value="esaka">大阪・江坂</option>
-        <option value="kyoto">京都市</option>
-        <option value="kobe">神戸市</option>
-        <option value="omiya">さいたま市大宮区</option>
-        <option value="fukushima">福島市</option>
-      </select>
-    </div>
+        <label for="region">地域：</label>
+        <input id="region" list="region-options" value="現在地（GPS）">
+        <datalist id="region-options">
+          <option value="現在地（GPS）" data-key="current"></option>
+          <option value="大阪・江坂" data-key="esaka"></option>
+          <option value="京都市" data-key="kyoto"></option>
+          <option value="神戸市" data-key="kobe"></option>
+          <option value="さいたま市大宮区" data-key="omiya"></option>
+          <option value="福島市" data-key="fukushima"></option>
+        </datalist>
+      </div>
 
     <details id="filters" class="filter" style="margin-top:8px">
       <summary id="filterSummary">条件（タップで開く）</summary>

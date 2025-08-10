@@ -139,19 +139,20 @@ out center 200;`;
     showLoading();
     const btn=document.getElementById("search"); if(btn) btn.disabled=true;
     try{
-      const region=document.getElementById("region");
+        const region=document.getElementById("region");
+        const key=Utils.resolveRegionKey(region?region.value:'');
       const minutes=parseInt((document.getElementById("driveMin")||{}).value,10)||15;
       const profile=(document.getElementById("speedProfile")||{}).value||"normal";
       const sortBy=(document.getElementById("sortBy")||{}).value||"score";
       const openOnly= !!(document.getElementById("openOnly")||{}).checked;
       saveUI();
 
-      let lat,lon;
-      if(region && region.value==="current"){
-        try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
-             lat=pos.coords.latitude; lon=pos.coords.longitude;
-        }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value="esaka"; }
-      }else{ const p=PRESETS[region?region.value:"esaka"]||PRESETS.esaka; lat=p.lat; lon=p.lon; }
+        let lat,lon;
+        if(key==="current"){
+          try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
+               lat=pos.coords.latitude; lon=pos.coords.longitude;
+          }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value=document.querySelector('#region-options option[data-key="esaka"]').value; }
+        }else{ const p=PRESETS[key||"esaka"]||PRESETS.esaka; lat=p.lat; lon=p.lon; }
 
       const kmh=speedToKmh(profile);
       const radKm=Math.max(1,(kmh*(minutes/60))*0.6);
