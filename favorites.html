@@ -1,16 +1,84 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><title>お気に入り</title>
-<link rel="stylesheet" href="styles.css"></head>
+<link rel="manifest" href="manifest.webmanifest">
+<title>おでかけ天気ナビ｜お気に入り</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .fav-card{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e2e8f0}
+  .fav-title{font-weight:700}
+  .fav-meta{color:#475569;font-size:13px;margin-top:4px}
+  .fav-actions{display:flex;gap:8px}
+  .danger{background:#fee2e2;border-color:#fecaca}
+</style>
+</head>
 <body>
-<header class="top"><div class="title">お気に入り</div><button id="addToHome" class="primary">ホームに追加</button></header>
-<main><section class="card"><ul id="favList" class="list"></ul></section></main>
+<header class="top">
+  <div class="title">お気に入り</div>
+  <button id="addToHome" class="primary">ホームに追加</button>
+</header>
+
+<main>
+  <section class="card">
+    <div id="empty" class="note" style="display:none">お気に入りはまだありません。<br>スポット/たべるの各カードにある <b>☆</b> を押すと追加できます。</div>
+    <div id="favList"></div>
+  </section>
+</main>
+
 <nav class="tabbar">
   <a href="index.html">天気</a>
   <a href="spots.html">スポット</a>
   <a href="meals.html">たべる</a>
   <a href="favorites.html" class="active">お気に入り</a>
 </nav>
+
 <script src="favorites.js"></script>
-<script src="gmaps_helper.js"></script>
-</body></html>
+<script>
+(function(){
+  function row(item){
+    const div = document.createElement('div');
+    div.className = 'fav-card';
+    const left = document.createElement('div');
+    left.innerHTML = `<div class="fav-title">${item.name}</div>
+      <div class="fav-meta">${item.kind==='spot'?'スポット':'お店'}／緯度${Number(item.lat).toFixed(4)} 経度${Number(item.lon).toFixed(4)}</div>`;
+    const right = document.createElement('div');
+    right.className = 'fav-actions';
+    const g = document.createElement('a');
+    g.className = 'iconbtn';
+    g.textContent = 'G';
+    g.href = Favorites.gmapsHref(item.name,item.lat,item.lon);
+    g.target = '_blank'; g.rel='noopener'; g.title='Googleマップで開く'; g.setAttribute('aria-label','Googleマップで開く');
+    const a = document.createElement('a');
+    a.className = 'iconbtn';
+    a.textContent = '';
+    a.href = Favorites.amapsHref(item.name,item.lat,item.lon);
+    a.target = '_blank'; a.rel='noopener'; a.title='Appleマップで開く'; a.setAttribute('aria-label','Appleマップで開く');
+    const del = document.createElement('button');
+    del.className = 'primary danger'; del.textContent = '削除';
+    del.addEventListener('click', ()=>{
+      Favorites.removeFavorite(item);
+      render();
+    });
+    right.append(g,a,del);
+    div.append(left,right);
+    return div;
+  }
+
+  function render(){
+    const wrap = document.getElementById('favList');
+    const empty = document.getElementById('empty');
+    wrap.innerHTML='';
+    const list = Favorites.getFavorites();
+    if(!list.length){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    list.sort((a,b)=> (a.name||'').localeCompare(b.name||'', 'ja'));
+    list.forEach(x=> wrap.appendChild(row(x)));
+  }
+
+  window.addEventListener('load', render);
+})();
+</script>
+</body>
+</html>

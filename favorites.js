@@ -1,5 +1,53 @@
+// favorites.js — localStorage-based favorites manager
+(function(global){
+  const KEY = "favorites_v1";
 
-function loadFavs(){try{return JSON.parse(localStorage.getItem("favorites")||"[]");}catch(_){return[];}}
-function appleMapsLink(lat,lon,name){const q=encodeURIComponent(name||'目的地');return `https://maps.apple.com/?ll=${lat},${lon}&q=${q}`;}
-function render(){const list=document.getElementById("favList");const favs=loadFavs();list.innerHTML="";if(!favs.length){const li=document.createElement("li");li.className="item";li.textContent="お気に入りはまだありません。スポット/たべるから追加できます。";list.appendChild(li);return;}favs.forEach(s=>{const li=document.createElement("li");li.className="item";li.innerHTML=`<div><strong>${s.name||'スポット'}</strong><div class="meta">${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}</div></div><div class="actions vstack"><a class="iconbtn amaps" target="_blank" rel="noopener" title="Appleマップで開く" href="${appleMapsLink(s.lat,s.lon,s.name)}"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='18' height='18' rx='4' fill='#e2e8f0' stroke='#cbd5e1'/><path d='M7 14l3-3 2 2 4-4' fill='none' stroke='#0ea5e9' stroke-width='2'/><circle cx='16' cy='9' r='2' fill='#94a3b8'/></svg></a></div>`;list.appendChild(li);});}
-window.addEventListener("load",()=>{render();if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js");}});
+  function _load(){
+    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+    catch(e){ return []; }
+  }
+  function _save(list){
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch(e){}
+  }
+  function makeKey(entry){
+    const id = entry.id || "";
+    const name = entry.name || "";
+    const lat = entry.lat!=null ? Number(entry.lat).toFixed(5) : "";
+    const lon = entry.lon!=null ? Number(entry.lon).toFixed(5) : "";
+    const kind = entry.kind || "";
+    return id ? `${kind}:${id}` : `${kind}:${name}|${lat},${lon}`;
+  }
+
+  function addFavorite(entry){
+    const list = _load();
+    const key = entry.key || makeKey(entry);
+    if(!list.find(x => (x.key||makeKey(x)) === key)){
+      list.push({...entry, key, addedAt: Date.now()});
+      _save(list);
+    }
+    return list;
+  }
+  function removeFavorite(keyOrEntry){
+    const key = typeof keyOrEntry === "string" ? keyOrEntry : (keyOrEntry.key || makeKey(keyOrEntry));
+    const list = _load().filter(x => (x.key||makeKey(x)) !== key);
+    _save(list);
+    return list;
+  }
+  function getFavorites(){ return _load(); }
+  function isFavorite(entry){
+    const key = entry.key || makeKey(entry);
+    return !!_load().find(x => (x.key||makeKey(x)) === key);
+  }
+
+  // map helpers
+  function gmapsHref(name,lat,lon){
+    const q = encodeURIComponent(name||"目的地");
+    return `https://maps.google.com/?q=${q}&ll=${lat},${lon}&z=17`;
+  }
+  function amapsHref(name,lat,lon){
+    const q = encodeURIComponent(name||"目的地");
+    return `https://maps.apple.com/?ll=${lat},${lon}&q=${q}`;
+  }
+
+  global.Favorites = { addFavorite, removeFavorite, getFavorites, isFavorite, makeKey, gmapsHref, amapsHref };
+})(window);
