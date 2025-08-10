@@ -23,6 +23,25 @@
     return rules.length?{type:"rules",rules}:{type:"unknown"};
   }
   function fmt(m){ const hh=String(Math.floor(m/60)).padStart(2,"0"); const mm=String(m%60).padStart(2,"0"); return hh+":"+mm; }
+  function computeOpenStatus(oh, now=new Date()){
+    const parsed=parseOpeningHours(oh||"");
+    if(parsed.type==="always") return {open:true,label:"営業中",today:"24時間"};
+    if(parsed.type!=="rules") return {open:null,label:"営業時間情報なし"};
+    const d=now.getDay(), m=now.getHours()*60+now.getMinutes();
+    const todays=parsed.rules.filter(r=>r.days.includes(d));
+    if(!todays.length) return {open:false,label:"本日休み"};
+    for(const r of todays){
+      if(r.openMin>r.closeMin){
+        if(m>=r.openMin || m<r.closeMin) return {open:true,label:"営業中",today:fmt(r.openMin)+"–"+fmt(r.closeMin)};
+      }else{
+        if(m>=r.openMin && m<r.closeMin) return {open:true,label:"営業中",today:fmt(r.openMin)+"–"+fmt(r.closeMin)};
+      }
+    }
+    return {open:false,label:"営業時間外"};
+  }
+  if(typeof module!=="undefined" && module.exports){
+    module.exports={parseOpeningHours,computeOpenStatus};
+  }
 
   const PRESETS={esaka:{lat:34.7565,lon:135.4968},kyoto:{lat:35.0380,lon:135.7740},kobe:{lat:34.6913,lon:135.1830},omiya:{lat:35.9060,lon:139.6240},fukushima:{lat:37.7608,lon:140.4747}};
 
@@ -193,16 +212,7 @@ out center 200;`;
         const distKm=haversine(lat,lon,s.lat,s.lon);
         score += distKm*0.4;
 
-        const openStatus=(function(oh){
-          const parsed=parseOpeningHours(oh||"");
-          if(parsed.type==="always") return {open:true,label:"営業中",today:"24時間"};
-          if(parsed.type!=="rules") return {open:null,label:"営業時間情報なし"};
-          const now=new Date(), d=now.getDay(), m=now.getHours()*60+now.getMinutes();
-          const todays=parsed.rules.filter(r=>r.days.includes(d));
-          if(!todays.length) return {open:false,label:"本日休み"};
-          for(const r of todays){ if(m>=r.openMin && m<r.closeMin) return {open:true,label:"営業中",today:fmt(r.openMin)+"–"+fmt(r.closeMin)}; }
-          return {open:false,label:"営業時間外"};
-        })(s.tags.opening_hours||"");
+        const openStatus=computeOpenStatus(s.tags.opening_hours||"");
 
         return {...s, distKm, score, flags, openStatus, type:t};
       }).filter(Boolean);
