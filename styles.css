@@ -46,7 +46,7 @@ h3{font-size:17px;font-weight:700;letter-spacing:.2px;margin:12px 0}
 .badge.high{background:#fed7aa;border-color:#fdba74;color:#92400e}
 .badge.danger{background:#fee2e2;border-color:#fecaca;color:#7f1d1d}
 .icon-temp,.icon-rh{font-size:16px;margin-right:4px}
-.meta{color:#475569;line-height:1.4}
+.meta{color:var(--muted);line-height:1.4}
 .iconbtn{width:44px;height:44px;border-radius:12px}
 .tabbar a{padding:10px 0}
 .loading{color:var(--muted);opacity:.9}
