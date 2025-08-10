@@ -1,5 +1,10 @@
-// spots.js — FULL FEATURE + region select tap hotfix
+// spots.js — filters summary + closed by default + persist UI + loading
 (function(){
+  // UI/UX: live region helpers
+  function announce(msg){ const el=document.getElementById('sr-live'); if(el){ el.textContent=msg; }}
+  function beginLoading(){ announce('検索中です'); }
+  function endLoading(){ announce('検索が完了しました'); }
+
   const PRESETS={esaka:{lat:34.7565,lon:135.4968},kyoto:{lat:35.0380,lon:135.7740},kobe:{lat:34.6913,lon:135.1830},omiya:{lat:35.9060,lon:139.6240},fukushima:{lat:37.7608,lon:140.4747}};
   const EXCLUDE_UNNAMED_ATTRACTION=false;
   const R=6371; function rad(x){return x*Math.PI/180;} function dist(a,b,c,d){const dLat=rad(c-a),dLon=rad(d-b);const A=Math.sin(dLat/2)**2 + Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dLon/2)**2;return 2*R*Math.atan2(Math.sqrt(A),Math.sqrt(1-A));}
@@ -85,33 +90,36 @@
     for(let r=0;r<=retries;r++){
       for(const url of ENDPOINTS){
         try{
-          const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(), timeoutMs);
+          if(window.__currentCtl){try{window.__currentCtl.abort()}catch(_){} }
+          const ctl=new AbortController(); window.__currentCtl=ctl; const timer=setTimeout(()=>ctl.abort(), timeoutMs);
           const res=await fetch(url,{method:"POST",body:query,headers:{"Content-Type":"text/plain"},signal:ctl.signal,cache:"no-store"});
           clearTimeout(timer);
           if(!res.ok) throw new Error(`HTTP ${res.status} at ${url}`);
-          return await res.json();
+          const data = await res.json(); window.__currentCtl=null; return data;
         }catch(e){ lastErr=e; }
       }
       await new Promise(res=>setTimeout(res,800*(r+1)));
     }
-    throw lastErr||new Error("Overpass fetch failed");
+    window.__currentCtl=null; throw lastErr||new Error("Overpass fetch failed");
   }
 
   async function run(){
+    beginLoading();
     setLoading();
     const btn=document.getElementById('searchSpots'); if(btn) btn.disabled=true;
     try{
-      const region=document.getElementById('region');
+        const region=document.getElementById('region');
+        const key=Utils.resolveRegionKey(region?region.value:'');
       const minutes=parseInt((document.getElementById('driveMin')||{}).value,10)||20;
       const profile=(document.getElementById('speedProfile')||{}).value||'normal';
       saveUI(); updateSummary();
 
-      let lat,lon;
-      if(region && region.value==='current'){
-        try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
-             lat=pos.coords.latitude; lon=pos.coords.longitude;
-        }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value='esaka'; }
-      }else{ const p=PRESETS[region?region.value:'esaka']||PRESETS.esaka; lat=p.lat; lon=p.lon; }
+        let lat,lon;
+        if(key==='current'){
+          try{ const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
+               lat=pos.coords.latitude; lon=pos.coords.longitude;
+          }catch(_){ const p=PRESETS.esaka; lat=p.lat; lon=p.lon; if(region) region.value=document.querySelector('#region-options option[data-key="esaka"]').value; }
+        }else{ const p=PRESETS[key||'esaka']||PRESETS.esaka; lat=p.lat; lon=p.lon; }
 
       const kmh=speedToKmh(profile);
       const radKm=Math.max(1,(kmh*(minutes/60))*0.6);
@@ -155,7 +163,6 @@
       setMessage(/HTTP 429/.test(String(e))?"混雑のため取得制限中です。1–2分おいて再試行してください。":/AbortError/.test(String(e))?"タイムアウトしました。通信状況の良い場所でお試しください。":"取得に失敗しました。時間をおいて再試行してください。");
     }finally{
       const btn=document.getElementById('searchSpots'); if(btn) btn.disabled=false;
-      const sel=document.getElementById('region'); if(sel){ sel.disabled=false; sel.style.pointerEvents='auto'; }
     }
   }
 
@@ -171,7 +178,6 @@
       });
       updateSummary();
     });
-    const sel=document.getElementById('region'); if(sel){ sel.addEventListener('change', run); sel.disabled=false; sel.style.pointerEvents='auto'; }
   }
 
   window.addEventListener('load', ()=>{
