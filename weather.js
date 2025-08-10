@@ -1,12 +1,136 @@
-const presets={esaka:{name:"大阪・江坂",lat:34.7565,lon:135.4968},kyoto:{name:"京都市",lat:35.038,lon:135.774},kobe:{name:"神戸市",lat:34.6913,lon:135.1830},omiya:{name:"さいたま市大宮区",lat:35.906,lon:139.624},fukushima:{name:"福島市",lat:37.7608,lon:140.4747}};
-function wbgtEstimate(t,rh){const e=(rh/100)*6.105*Math.exp((17.27*t)/(237.7+t));return 0.567*t+0.393*e+3.94;}
-function heatIndexC(t,rh){const T=t*9/5+32,R=rh;const HI=-42.379+2.04901523*T+10.14333127*R-0.22475541*T*R-0.00683783*T*T-0.05481717*R*R+0.00122874*T*T*R+0.00085282*T*R*R-0.00000199*T*T*R*R;const H=T<80?T+(HI-T)*Math.max(0,(T-70)/10):HI;return (H-32)*5/9;}
-function wbgtLevel(w){if(w<25)return{label:"注意",class:"safe",icon:"🟢",advice:"水分をこまめに。短時間の屋外はOK。"};if(w<28)return{label:"警戒",class:"caution",icon:"⚠️",advice:"屋外は短時間に。日陰/屋内メインで。"};if(w<31)return{label:"厳重警戒",class:"high",icon:"🔥",advice:"午前のみ短時間、午後は屋内。"};return{label:"危険",class:"danger",icon:"☠️",advice:"外出は最小限に。冷房室内で。"};}
-async function fetchWeatherAll(lat,lon){const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;return fetch(u).then(r=>r.json());}
-function wmoIcon(c){if([0].includes(c))return"☀️";if([1,2,3].includes(c))return"⛅";if([45,48].includes(c))return"🌫";if([51,53,55,61,63,65,80,81,82].includes(c))return"🌧";if([71,73,75,85,86].includes(c))return"❄️";if([95,96,99].includes(c))return"⛈️";return"☁️";}
-function renderHourly(h){const list=document.getElementById("hourly");list.innerHTML="";const now=new Date();for(let i=0;i<h.time.length;i++){const t=new Date(h.time[i]);if(t<now)continue;const hh=("0"+t.getHours()).slice(-2);const temp=h.temperature_2m[i];const pop=h.precipitation_probability?.[i];const icon=wmoIcon(h.weather_code?.[i]);const li=document.createElement("li");li.className="hour";li.innerHTML=`<span class="icon">${icon}</span> <strong>${hh}時</strong> ${temp.toFixed(0)}℃ ${pop!=null?`/ 降水${pop}%`:""}`;list.appendChild(li);if(list.children.length>=12)break;}}
-function renderDaily(d){const list=document.getElementById("daily");list.innerHTML="";for(let i=0;i<d.time.length&&i<5;i++){const t=new Date(d.time[i]);const mm=t.getMonth()+1,dd=t.getDate();const icon=wmoIcon(d.weather_code?.[i]);const hi=d.temperature_2m_max?.[i];const lo=d.temperature_2m_min?.[i];const pop=d.precipitation_probability_max?.[i];const li=document.createElement("li");li.className="day";li.innerHTML=`<span class="icon">${icon}</span> <strong>${mm}/${dd}</strong> ${Math.round(lo)}–${Math.round(hi)}℃ ${pop!=null?`/ 降水${pop}%`:""}`;list.appendChild(li);}}
-async function update(){let key=Utils.resolveRegionKey(document.getElementById("region").value);let lat,lon;if(key==="current"){try{const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));lat=pos.coords.latitude;lon=pos.coords.longitude;}catch(e){alert("現在地が取得できませんでした。江坂を使用します。");key="esaka";lat=presets.esaka.lat;lon=presets.esaka.lon;document.getElementById("region").value=document.querySelector("#region-options option[data-key="esaka"]").value;}}else{lat=presets[key].lat;lon=presets[key].lon;}let data;try{data=await fetchWeatherAll(lat,lon);}catch(e){}const temp=data?.current?.temperature_2m;const rh=data?.current?.relative_humidity_2m;if(temp==null||rh==null){alert("天気データが取得できませんでした。");document.getElementById("wbgtValue").textContent="--";const b=document.getElementById("wbgtLevel");b.textContent="--";b.className="badge";document.getElementById("temp").textContent="--";document.getElementById("rh").textContent="--";document.getElementById("heatIndex").textContent="--";document.getElementById("advice").textContent="データを取得できませんでした。";return;}const w=wbgtEstimate(temp,rh);const hi=heatIndexC(temp,rh);const lvl=wbgtLevel(w);document.getElementById("wbgtValue").textContent=w.toFixed(1);const b=document.getElementById("wbgtLevel");b.textContent=lvl.label;b.className="badge "+lvl.class;document.getElementById("temp").textContent=temp.toFixed(1);document.getElementById("rh").textContent=rh.toFixed(0);document.getElementById("heatIndex").textContent=hi.toFixed(1);document.getElementById("advice").textContent=lvl.advice+" 体調が悪くなったら無理せず休憩/帰宅を。";renderHourly(data.hourly||{});renderDaily(data.daily||{});}
-window.addEventListener("load",()=>{update();if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js");}});
-document.getElementById("refresh").addEventListener("click",update);
-document.getElementById("addToHome").addEventListener("click",()=>alert("共有 → 『ホーム画面に追加』でアプリ化できます。"));
+// weather.js — robust fetch + UX polish + WBGT/HeatIndex
+(function(){
+  const PRESETS = {
+    esaka:{lat:34.7565, lon:135.4968, label:"大阪・江坂"},
+    kyoto:{lat:35.0380, lon:135.7740, label:"京都市"},
+    kobe:{lat:34.6913, lon:135.1830, label:"神戸市"},
+    omiya:{lat:35.9060, lon:139.6240, label:"さいたま市大宮区"},
+    fukushima:{lat:37.7608, lon:140.4747, label:"福島市"}
+  };
+
+  let ctl = null;
+
+  function $(id){ return document.getElementById(id); }
+  function announce(msg){ const el=$('sr-live'); if(el){ el.textContent=msg; } }
+  function begin(){ announce('天気を取得中です'); $('hourly').innerHTML=''; $('daily').innerHTML=''; }
+  function done(){ announce('天気の取得が完了しました'); }
+
+  function heatIndexC(T, RH){
+    // Rothfusz regression (approx), input C/%, output C
+    const Tc = T, Tf = Tc * 9/5 + 32;
+    const HI_f = -42.379 + 2.04901523*Tf + 10.14333127*RH - 0.22475541*Tf*RH - 6.83783e-3*Tf*Tf - 5.481717e-2*RH*RH + 1.22874e-3*Tf*Tf*RH + 8.5282e-4*Tf*RH*RH - 1.99e-6*Tf*Tf*RH*RH;
+    return (HI_f - 32)*5/9;
+  }
+  function wbgtSimple(T, RH){
+    // simple outdoor approximation from T and RH
+    // WBGT ≈ 0.567*T + 0.393*e + 3.94, where e is vapor pressure (hPa)
+    const e = RH/100 * 6.105 * Math.exp((17.27*T)/(237.7+T));
+    return 0.567*T + 0.393*e + 3.94;
+  }
+  function wbgtLevel(w){
+    if(w<21) return {level:'安全', cls:'safe', advice:'通常の活動でOK'};
+    if(w<25) return {level:'注意', cls:'caution', advice:'こまめな水分補給・適宜休憩'};
+    if(w<28) return {level:'警戒', cls:'high', advice:'激しい運動を避け、日陰で休憩'};
+    if(w<31) return {level:'厳重警戒', cls:'danger', advice:'長時間の屋外活動は避ける'};
+    return {level:'危険', cls:'danger', advice:'外出は最小限に。冷房環境で休息'};
+  }
+
+  function regionKey(){
+    const el=$('region');
+    if(!el) return 'esaka';
+    return el.value || 'esaka';
+  }
+  function setRegion(key){ const el=$('region'); if(el) el.value=key; }
+
+  async function fetchWeather(lat, lon){
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation&daily=temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum&timezone=auto`;
+    if(ctl){ try{ ctl.abort(); }catch(_){}} ctl = new AbortController();
+    const res = await fetch(url, {signal: ctl.signal, cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const j = await res.json(); ctl=null; return j;
+  }
+
+  function renderNow(T, RH){
+    const WBGT = wbgtSimple(T, RH);
+    const L = wbgtLevel(WBGT);
+    $('temp').textContent = T.toFixed(1);
+    $('rh').textContent = Math.round(RH);
+    const HI = heatIndexC(T, RH);
+    $('heatIndex').textContent = HI.toFixed(1);
+    $('wbgtValue').textContent = WBGT.toFixed(1);
+    const badge = $('wbgtLevel'); badge.textContent = L.level; badge.className = 'badge '+L.cls;
+    $('advice').textContent = '妊婦さんへ：' + L.advice + '／無理はせず、気分が悪い時はすぐ休みましょう。';
+  }
+
+  function renderHourly(hourly){
+    const ul = $('hourly'); ul.innerHTML='';
+    const now = new Date();
+    const idxNow = hourly.time.findIndex(t => new Date(t) >= now);
+    const start = Math.max(0, idxNow);
+    for(let i=start; i<Math.min(start+12, hourly.time.length); i++){
+      const t = new Date(hourly.time[i]);
+      const item = document.createElement('li');
+      item.className = 'item';
+      const T = hourly.temperature_2m[i];
+      const RH = hourly.relative_humidity_2m[i];
+      const pop = hourly.precipitation_probability?.[i] ?? null;
+      item.innerHTML = `<div><strong>${t.getHours()}時</strong> <span class="meta">体感 ${Math.round(hourly.apparent_temperature[i])}℃${pop!=null?`／雨${pop}%`:''}</span></div>
+      <div class="meta">${T.toFixed(1)}℃・湿度${RH}%</div>`;
+      ul.appendChild(item);
+    }
+  }
+
+  function renderDaily(daily){
+    const ul = $('daily'); ul.innerHTML='';
+    for(let i=0;i<Math.min(5, daily.time.length); i++){
+      const d = new Date(daily.time[i]);
+      const item = document.createElement('li'); item.className='item';
+      item.innerHTML = `<div><strong>${d.getMonth()+1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})</strong>
+        <span class="meta">最高${Math.round(daily.temperature_2m_max[i])}℃／最低${Math.round(daily.temperature_2m_min[i])}℃ ／ UV${Math.round(daily.uv_index_max[i]||0)}</span></div>`;
+      ul.appendChild(item);
+    }
+  }
+
+  async function run(){
+    try{
+      begin();
+      let lat, lon;
+      const key = regionKey();
+      if(key==='current'){
+        try{
+          const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:8000}));
+          lat = pos.coords.latitude; lon = pos.coords.longitude;
+        }catch(e){
+          const p = PRESETS.esaka; lat=p.lat; lon=p.lon; setRegion('esaka');
+        }
+      }else{
+        const p = PRESETS[key] || PRESETS.esaka; lat=p.lat; lon=p.lon;
+      }
+      const j = await fetchWeather(lat, lon);
+      // prefer the first current-ish index
+      const h = j.hourly;
+      const now = new Date();
+      let idx = 0;
+      for(let i=0;i<h.time.length;i++){ if(new Date(h.time[i]) >= now){ idx=i; break; } }
+      renderNow(h.temperature_2m[idx], h.relative_humidity_2m[idx]);
+      renderHourly(h);
+      renderDaily(j.daily);
+    }catch(e){
+      const ul1=$('hourly'); const ul2=$('daily');
+      if(ul1) ul1.innerHTML = `<li class="item">天気の取得に失敗しました。時間をおいて再試行してください。</li>`;
+      if(ul2) ul2.innerHTML = '';
+      const a=$('advice'); if(a) a.textContent='通信状態をご確認のうえ、更新をお試しください。';
+      console.error(e);
+    }finally{
+      done();
+    }
+  }
+
+  function bind(){
+    const btn = $('refresh'); if(btn) btn.addEventListener('click', run);
+    const sel = $('region'); if(sel){ sel.addEventListener('change', run); }
+    run();
+  }
+
+  window.addEventListener('load', bind);
+})();
