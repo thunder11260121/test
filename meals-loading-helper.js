@@ -1,4 +1,4 @@
-// meals.js — show "検索中…" while fetching
+// meals-loading-helper.js — show '検索中…' while fetching
 (function(){
   // We assume existing functions are defined as in your current meals.js
   const origRun = window.__MEALS_RUN__;
