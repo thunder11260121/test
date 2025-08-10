@@ -69,6 +69,16 @@
     } catch (_) { }
   }
 
-  global.Utils = { haversine, fetchOverpassJSON, errorMessage, cacheKey, cacheGet, cacheSet };
+  function resolveRegionKey(inputValue) {
+    const opts = document.querySelectorAll('#region-options option');
+    for (const opt of opts) {
+      if (opt.value === inputValue) {
+        return opt.dataset.key || inputValue;
+      }
+    }
+    return inputValue;
+  }
+
+  global.Utils = { haversine, fetchOverpassJSON, errorMessage, cacheKey, cacheGet, cacheSet, resolveRegionKey };
 })(window);
 

@@ -209,7 +209,7 @@ async function updateWeatherAndWBGT(lat, lon){
 }
 
 async function runUpdate(){
-  let key = document.getElementById("region").value;
+    let key = Utils.resolveRegionKey(document.getElementById("region").value);
   let lat, lon;
   if (key==="current"){
     try{
@@ -219,8 +219,8 @@ async function runUpdate(){
       lat = pos.coords.latitude; lon = pos.coords.longitude;
     }catch(e){
       alert("現在地が取得できませんでした。プリセット地域（江坂）を使用します。");
-      key="esaka"; lat=presets.esaka.lat; lon=presets.esaka.lon;
-      document.getElementById("region").value = "esaka";
+        key="esaka"; lat=presets.esaka.lat; lon=presets.esaka.lon;
+        document.getElementById("region").value = document.querySelector('#region-options option[data-key="esaka"]').value;
     }
   }else{
     lat = presets[key].lat; lon = presets[key].lon;
