@@ -1,6 +1,10 @@
-適用方法:
-1) このZIPを展開し、`favorites.html`, `favorites.js`, `fav_injector.js` をリポジトリ直下に追加
-2) `spots.html` と `meals.html` の末尾（自分のJSの後）に:
-<script src="favorites.js"></script>
-<script src="fav_injector.js"></script>
-3) GitHub Pages 更新後、キャッシュをクリアして再読み込み
+今回のパッチ（操作感の統一）
+- たべる/スポットの「詳細条件」を初期は閉じる（開閉状態は自動保存）
+- summaryに要約表示（たべる=カテゴリ数/配慮数/避ける数、スポット=分・速度・各優先度）
+- 取得中は「検索中…」、ボタンdisabledは維持
+- UI状態（地域・分・速度・ほか）をlocalStorageに保存
+
+適用方法（mainへ直上書き）
+1) `meals.html` と `meals.js` を上書きアップロード
+2) `spots.html` と `spots.js` を上書きアップロード
+3) 端末で unregister.html を開いてキャッシュ削除 → 各ページを再読み込み

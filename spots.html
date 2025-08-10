@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <title>おでかけ天気ナビ｜スポット</title>
-<link rel="stylesheet" href="styles.css?v=20250809">
-<script src="utils.js?v=20250809"></script>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="top">
   <div class="title">スポット検索</div>
-  <div class="row"><button id="addToHome" class="primary">ホームに追加</button></div>
+  <button id="addToHome" class="primary">ホームに追加</button>
 </header>
 
 <main>
@@ -27,8 +26,9 @@
         <option value="fukushima">福島市</option>
       </select>
     </div>
-    <details class="filter">
-      <summary>条件を開く（車で◯◯分・カテゴリ優先度）</summary>
+
+    <details id="filters" class="filter" style="margin-top:8px">
+      <summary id="filterSummary">条件（タップで開く）</summary>
       <div class="row" style="margin-top:8px">
         <label>車で</label>
         <input type="number" id="driveMin" min="5" max="90" step="5" value="20"> 分以内
@@ -46,10 +46,10 @@
         <label>匂い少: <input type="number" id="prio-lowodor" min="1" max="5" value="1"></label>
       </div>
     </details>
+
     <div class="row" style="margin-top:8px">
       <button id="searchSpots" class="primary">スポット検索</button>
       <button id="resetFilters">条件リセット</button>
-      <a href="meals.html" class="primary" style="text-decoration:none;display:inline-block">たべるを探す</a>
     </div>
   </section>
 
@@ -67,18 +67,9 @@
   <a href="favorites.html">お気に入り</a>
 </nav>
 
-<script src="gmaps_helper.js?v=20250809?v=hotfix"></script>
-<script src="spots.js?v=20250809?v=hotfix"></script>
-<script src="favorites.js"></script>
-<script src="fav_injector.js"></script>
-<script>
-  // 最終保険: JSが読み込めても自動検索されなかった場合に呼ぶ
-  window.addEventListener('load', function(){
-    const ul=document.getElementById('spots');
-    if(ul && !ul.children.length){ ul.innerHTML = "<li class='spot'>検索中…</li>"; }
-    if (typeof window.runSpots === 'function') { try{ window.runSpots(); }catch(e){} }
-  });
-</script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v12.js?v=20250809");}</script>
+<script src="utils.js"></script>
+<script src="gmaps_helper.js"></script>
+<script src="spots.js"></script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw-v12.js");}</script>
 </body>
 </html>
